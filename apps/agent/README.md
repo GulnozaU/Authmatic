@@ -1,114 +1,117 @@
-# Agent service (FastAPI)
+# Agent service (FastAPI) — teammate instructions
 
-**Owner:** Teammate  
-**Integration surface:** mock HealthFirst portal in `apps/web` — see **[docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md)**
-
-**Machine-readable portal spec:** [`mock/healthfirst-portal.json`](../../mock/healthfirst-portal.json)
+**Owner:** Teammate (backend + sponsor integrations)  
+**Full work split:** [docs/team-split-report.md](../../docs/team-split-report.md)
 
 ---
 
-## Your job
+## Important: agent already partially works
 
-Build the real agent loop on top of the mock insurer portal (already built):
-
-1. **EXTRACT** — parse Sarah's PDFs (Daytona / pdfplumber + LLM)
-2. **VERIFY** — Opsera compliance scan before submit
-3. **SUBMIT** — Rtrvr opens `PORTAL_URL`, fills 8 fields, clicks `#submit-prior-auth`
-4. **ADJUDICATE** — call `POST /api/pa/{ref}/adjudicate` (submit does NOT auto-approve)
-5. **PERSIST** — InsForge workflow + Tigris receipt
-
----
-
-## Portal URLs (do not hit real payers)
-
-| URL | Purpose |
-|-----|---------|
-| `{WEB_URL}/portal/healthfirst/prior-auth` | **Form Rtrvr fills** |
-| `{WEB_URL}/portal/healthfirst/submission/{ref}` | Status page after submit |
-| `{WEB_URL}/run/{run_id}` | Audit UI (already in Next.js) |
-
-Set in `.env`:
+A **simulated 5-step agent** runs today in `apps/web`. The demo works end-to-end without your FastAPI service:
 
 ```bash
-WEB_URL=http://localhost:3000
-PORTAL_URL=http://localhost:3000/portal/healthfirst/prior-auth
+cd apps/web && npm run dev    # often port 3001
+# http://localhost:3001 → Run demo → /run/{id}
 ```
 
-Use the port your Next.js dev server actually runs on.
+Your job: **replace 3 fake steps** (EXTRACT, VERIFY, SUBMIT) with real sponsor calls. Steps 4–5 partially exist — adjudicate API is built; you add InsForge `agent_events` + Tigris uploads.
+
+**Contract to match:** `apps/web/src/lib/agent-orchestrator.ts`
 
 ---
 
-## Form selectors (Rtrvr)
+## Do these in order
 
-| Field | Selector | Demo value |
-|-------|----------|------------|
-| Patient Name | `#patient_name` | Sarah Martinez |
-| DOB | `#dob` | 03/14/1986 |
-| Member ID | `#member_id` | HF45821973 |
-| Diagnosis | `#diagnosis` | Type 2 Diabetes (E11.9) |
-| Medication | `#medication` | Ozempic |
-| Dosage | `#dosage` | 0.25mg weekly |
-| Provider | `#provider_name` | Emily Chen, MD |
-| Justification | `#justification` | Poor glycemic control despite first-line therapy… |
-| Submit | `#submit-prior-auth` | — |
+### 1. Read (30 min)
 
-Full list + API examples: [`mock/healthfirst-portal.json`](../../mock/healthfirst-portal.json)
+- `apps/web/src/lib/agent-orchestrator.ts`
+- `apps/web/src/lib/agent-runs.ts`
+- [docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md)
+- [mock/healthfirst-portal.json](../../mock/healthfirst-portal.json)
 
----
+### 2. Scaffold FastAPI in `apps/agent/`
 
-## Rtrvr task prompt
+Endpoints:
 
-```
-Open {PORTAL_URL}. Fill: patient_name, dob, member_id, diagnosis,
-medication, dosage, provider_name, justification. Click #submit-prior-auth.
-Wait for redirect to /portal/healthfirst/submission/PA-*.
-Return the reference_id from the URL.
-```
+| Method | Path |
+|--------|------|
+| `GET` | `/health` |
+| `POST` | `/api/run` |
+| `GET` | `/api/run/{id}` |
+| `GET` | `/api/stream/{id}` (SSE) |
 
----
-
-## APIs you call (web app — already built)
-
-| Method | Path | When |
-|--------|------|------|
-| `POST` | `/api/pa/submit` | Optional — Rtrvr can submit via form instead |
-| `GET` | `/api/pa/{ref}` | Poll status |
-| `POST` | `/api/pa/{ref}/adjudicate` | **After submit** — runs payer review (~8s) |
-
-Or implement your own agent endpoints and have the web UI call you:
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| `POST` | `/api/run` | Accept PDFs, return `run_id` |
-| `GET` | `/api/run/{id}` | Full audit payload |
-| `GET` | `/api/stream/{id}` | SSE agent steps |
-| `GET` | `/health` | Smoke test |
-
-Today these live in `apps/web` as a **simulated** agent. Teammate can either:
-- **Option A:** Replace orchestrator — web proxies to FastAPI at `AGENT_URL`
-- **Option B:** Move SSE + run logic entirely into FastAPI
-
----
-
-## Fixture fallback
-
-When `DEMO_FIXTURE_MODE=true`, skip live Rtrvr and return canned receipt `PA-2026-00451`.
-
-Demo payload source: `mock/healthfirst-case.json` and `apps/web/src/lib/demo-case.ts`.
-
----
-
-## Smoke test (portal only, no FastAPI yet)
+Env (match actual web port):
 
 ```bash
-# Terminal 1
-cd apps/web && npm run dev
-
-# Terminal 2 — test adjudication after manual form submit
-curl -X POST http://localhost:3000/api/pa/PA-2026-00451/adjudicate \
-  -H "Content-Type: application/json" \
-  -d '{"review_delay_ms": 3000}'
+WEB_URL=http://localhost:3001
+PORTAL_URL=http://localhost:3001/portal/healthfirst/prior-auth
+AGENT_URL=http://localhost:8000
 ```
+
+### 3. EXTRACT — Daytona
+
+PDFs: `assets/demo/patient_chart_sarah_martinez.pdf`, `prescription_ozempic_martinez.pdf`  
+Output: 8 fields (see `mock/healthfirst-case.json`). Fallback: fixture if `DEMO_FIXTURE_MODE=true`.
+
+### 4. VERIFY — Opsera
+
+Scan extracted fields before submit. Emit SSE step 2. Stop on failure.
+
+### 5. SUBMIT — Rtrvr
+
+```
+Open {PORTAL_URL}.
+Fill #patient_name #dob #member_id #diagnosis #medication #dosage #provider_name #justification.
+Click #submit-prior-auth.
+Return reference_id from /portal/healthfirst/submission/PA-* URL.
+```
+
+**Do not rebuild the portal** — use our form at `PORTAL_URL`.
+
+### 6. ADJUDICATE — call our API
+
+```bash
+POST {WEB_URL}/api/pa/{reference_id}/adjudicate
+Body: { "review_delay_ms": 8000 }
+```
+
+Then `GET {WEB_URL}/api/pa/{reference_id}` until approved/denied.
+
+### 7. PERSIST — InsForge + Tigris
+
+- Insert each step → `agent_events` table
+- Insert/update `prior_auths` with receipt + Tigris storage keys
+- Upload PDFs to Tigris bucket `authmatic-demo`
+
+Schema: `db/001_authmatic_schema.sql` · Setup: [docs/insforge.md](../../docs/insforge.md), [docs/tigris.md](../../docs/tigris.md)
+
+### 8. Wire to UI
+
+Proxy web `/api/stream` → your FastAPI SSE, **or** point home page to `AGENT_URL`. Keep `/run/[id]` unchanged.
+
+### 9. Deploy Render
+
+Public `WEB_URL` + `AGENT_URL`. Update `PORTAL_URL`.
+
+---
+
+## Do NOT build
+
+- HealthFirst portal / form
+- `/api/pa/submit`, `/api/pa/{ref}`, `/api/pa/{ref}/adjudicate`
+- `/run/[id]` audit UI
+- Adjudication rules (`apps/web/src/lib/adjudication.ts`)
+
+---
+
+## Done when
+
+- [ ] Rtrvr fills real portal → real `reference_id`
+- [ ] Adjudicate API returns `approved` for Sarah demo
+- [ ] SSE events match shape in `agent-runs.ts`
+- [ ] `agent_events` + `prior_auths` in InsForge
+- [ ] PDFs in Tigris
+- [ ] `DEMO_FIXTURE_MODE` fallback works
 
 ---
 
@@ -116,10 +119,6 @@ curl -X POST http://localhost:3000/api/pa/PA-2026-00451/adjudicate \
 
 | File | Purpose |
 |------|---------|
-| [docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md) | **Start here** — URLs, form, API, flow |
-| [mock/healthfirst-portal.json](../../mock/healthfirst-portal.json) | Machine-readable selectors + API |
-| [mock/healthfirst-case.json](../../mock/healthfirst-case.json) | Sarah Martinez demo data |
-| [spec.md](../../spec.md) | Features + acceptance criteria |
-| [architecture.md](../../architecture.md) | System design |
-| [docs/insforge.md](../../docs/insforge.md) | Database tables |
-| [docs/tigris.md](../../docs/tigris.md) | PDF storage |
+| [docs/team-split-report.md](../../docs/team-split-report.md) | Full split + acceptance checklist |
+| [docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md) | Portal + API spec |
+| [mock/healthfirst-portal.json](../../mock/healthfirst-portal.json) | Rtrvr selectors |

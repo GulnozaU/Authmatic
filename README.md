@@ -102,7 +102,8 @@ Field reference: `mock/healthfirst-case.json`
 **Portal handoff (teammate):** [docs/healthfirst-portal-handoff.md](docs/healthfirst-portal-handoff.md) · selectors: [mock/healthfirst-portal.json](mock/healthfirst-portal.json)  
 InsForge setup: [docs/insforge.md](docs/insforge.md) · Tigris: [docs/tigris.md](docs/tigris.md)
 
-**Team handoff PDF:** [docs/authmatic-team-handoff.pdf](docs/authmatic-team-handoff.pdf) — what we have, what backend needs, sponsor env vars.
+**Team handoff PDF:** [docs/authmatic-team-handoff.pdf](docs/authmatic-team-handoff.pdf) — what we have, what backend needs, sponsor env vars.  
+**Team split report:** [docs/team-split-report.md](docs/team-split-report.md) — what you built vs what teammate builds.
 
 ---
 
