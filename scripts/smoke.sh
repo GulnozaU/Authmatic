@@ -58,6 +58,39 @@ check "Agent"     bash -c '
   curl -sf "${AGENT_BASE_URL:-http://localhost:8000}/healthz" >/dev/null
 '
 
+# Verifies both PDF formats (simple labeled-field + letterhead) parse to
+# the right drug. Catches regressions in apps/agent/src/tools/execute.py
+# or in the generated fixture PDFs. Skipped if pdfplumber not installed.
+check "Parser"    bash -c '
+  PY="apps/agent/.venv/bin/python"
+  [[ -x "$PY" ]] || PY=python3
+  "$PY" - <<PYEOF
+import sys
+sys.path.insert(0, "apps/agent")
+try:
+    from src.tools.execute import _local_parse
+except ImportError as e:
+    print(f"skip: {e}"); sys.exit(0)
+
+cases = [
+    ("assets/fixtures/rx-lisinopril.pdf",       "Lisinopril"),
+    ("assets/fixtures/rx-metformin.pdf",        "Metformin"),
+    ("assets/fixtures/rx-ozempic-martinez.pdf", "Ozempic"),
+    ("assets/fixtures/rx-humira-thompson.pdf",  "Humira"),
+]
+fail = 0
+for path, expected in cases:
+    try:
+        with open(path, "rb") as f:
+            got = _local_parse(f.read()).get("drug_name", "")
+    except FileNotFoundError:
+        continue  # PDF not generated locally — non-fatal for smoke
+    if expected.lower() not in got.lower():
+        print(f"  {path}: expected {expected!r}, got {got!r}"); fail += 1
+sys.exit(fail)
+PYEOF
+'
+
 echo
 if [[ $fail -eq 0 ]]; then
   green "All systems green. Cleared for build."
