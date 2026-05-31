@@ -1,7 +1,9 @@
 # Secrets
 .env
 .env.local
+.env.production
 .env.*.local
+.env.*.production
 
 # Node
 node_modules/
@@ -43,3 +45,18 @@ demo/recordings/*.mov
 # Build artifacts
 *.egg-info/
 build/
+
+# InsForge & AI agent skills
+.insforge
+.agent
+.agents
+.augment
+.claude
+.cline
+.github/copilot*
+.kilocode
+.qoder
+.qwen
+.roo
+.trae
+.windsurf

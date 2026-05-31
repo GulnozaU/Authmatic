@@ -9,9 +9,11 @@ import fs from 'fs/promises';
 
 const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? 'http://localhost:8000';
 
-// Resolved at runtime, relative to where `next dev` / `next start` runs from
-// (apps/web/). The fixtures live two directories up.
-const FIXTURES_DIR = path.resolve(process.cwd(), '..', '..', 'assets', 'fixtures');
+// Resolved at runtime to <web>/public/fixtures/. We copy the canonical
+// fixtures from assets/fixtures/ into public/fixtures/ at build time so
+// the route works both locally and on Vercel (where only apps/web is
+// uploaded). Vercel sets process.cwd() to the web root.
+const FIXTURES_DIR = path.join(process.cwd(), 'public', 'fixtures');
 
 // Hardcoded allowlist — we only proxy the curated demo PDFs, never
 // arbitrary filenames. Protects against `..` traversal too.
@@ -47,7 +49,7 @@ export async function POST(
   const form = new FormData();
   form.append(
     'pdf',
-    new Blob([pdfBytes], { type: 'application/pdf' }),
+    new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' }),
     params.name,
   );
 
