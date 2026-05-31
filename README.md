@@ -125,6 +125,19 @@ tiles opens a payer-portal-style confirmation at **`/receipt/:id`**.
 
 Full walkthrough in [demo/pitch-script.md](demo/pitch-script.md).
 
+## Optional payer portal surface
+
+The web app also includes a standalone HealthFirst mock payer portal adapted
+from the GulnozaU/Authmatic repo:
+
+- `/portal/healthfirst/prior-auth` — Rtrvr-friendly PA form with stable field ids.
+- `/portal/healthfirst/submission/:ref` — status page that polls local portal state.
+- `/api/portal/healthfirst/pa/submit` — local submit endpoint, no Insforge key required.
+- `/api/portal/healthfirst/pa/:ref/adjudicate` — deterministic review simulation.
+
+This is an optional demo artifact; the primary judged flow remains the PDF
+dropzone → `/run/:id` audit page → receipt URL.
+
 ## Architecture in one diagram
 
 ```

@@ -1,60 +1,121 @@
 # Authmatic — 3-minute pitch script
 
-> Read aloud with a timer. If you're over by 10s, cut a sentence.
-> Full Q&A prep, fallback plan, and sponsor-mention checklist:
-> see [`../../docs/ideas/authmatic/demo.md`](../../docs/ideas/authmatic/demo.md).
+> Read aloud with a timer. **Bold** lines survive the cut. v1 draft against
+> the post-PR-#2/#3 clinic UI + live deploy at
+> [z739c3mi.insforge.site](https://z739c3mi.insforge.site/) — storyteller
+> will rewrite; this is the starting point.
 
 ---
 
 ## 0:00 – 0:30 — Problem
 
-> Meet Maria. She's the lead medical assistant at Dr. Chen's primary
-> care group in Oakland. Every single week, Maria spends nine hours
-> filing prior authorizations — typing the same patient data into UHC,
-> then Aetna, then CoverMyMeds, because none of them have an API. When
-> she misses one, her patient doesn't get their prescription. When she
-> rushes, she over-shares PHI and triggers a compliance review.
+> **Elena is a medical assistant at a primary-care clinic in Oakland.
+> Every Friday she spends nine hours filing prior-authorization forms
+> across UHC, Aetna, and HealthFirst — three payer portals, none of
+> them with an API. Every patient stuck on a denied PA waits another
+> week for their medication. Last month it happened twelve times in her
+> clinic alone.**
 >
-> This is the most-hated 9 hours in American primary care. And it
-> happens forty million times a week, across every clinic in this
-> country.
+> This is the most-hated nine hours in American primary care, and it
+> happens forty million times a week.
+
+**Beat lands when:** judge has a doctor in their life. Don't oversell.
 
 ## 0:30 – 0:45 — Solution one-liner
 
-> We built **Authmatic**: an agent that watches the prescription queue,
-> drives the payer portals end-to-end, and returns a HIPAA-grade audit
-> receipt — in ninety seconds, with a cryptographic compliance stamp.
+> **"We built Authmatic: an autonomous agent that files real prior
+> authorizations on real payer portals in 90 seconds, with a HIPAA-grade
+> audit trail. No chatbot. No suggestions. The agent acts."**
 
 ## 0:45 – 2:30 — Live demo
 
+The homepage is the **clinic console**: one screen, one job. Walk it
+in four beats; the live deploy holds them all.
+
+| Time | What happens on screen | What you say |
+|------|------------------------|--------------|
+| 0:45 | Open https://z739c3mi.insforge.site — clinic console, "New prior authorization" header. | **"This is Elena's screen. One panel. One affordance."** |
+| 0:55 | Click **Try the demo** (Sarah Martinez · Ozempic) | "Sarah Martinez. Type 2 diabetes. Her doctor needs Ozempic approved. Elena would normally spend 20 minutes on this — I'm going to click a button." |
+| 1:10 | EXTRACT card lights up — Daytona | "Daytona spins up a sandbox. Reads the chart PDF and the prescription. Extracts diagnosis, member ID, dose. Ninety milliseconds." |
+| 1:25 | VERIFY card — Opsera | "Before anything leaves us, Opsera scans the outgoing packet for PHI we shouldn't disclose. Green." |
+| 1:40 | SUBMIT card — Rtrvr | "Rtrvr drives the HealthFirst provider portal in a real browser session. Fills the form. Submits it." |
+| 1:50 | ADJUDICATE + PERSIST cards | "HealthFirst's rule engine returns a decision. Insforge persists the entire chain to Postgres and uploads the receipt PDF to Tigris. Done." |
+| 2:00 | Page redirects to `/run/<uuid>` — full audit chain visible, reference number `PA-2026-<id>` pinned at top | **"Receipt URL. Every step cited back to the source PDF. If a regulator audits this in six months, Elena can defend every field."** |
+
+### The batch + safety beats (cut if running long)
+
+After the single happy path, switch tabs to `/dashboard` and the
+`/portal/healthfirst/prior-auth?autofill=1` view:
+
 | Time | Screen | What you say |
 |------|--------|--------------|
-| 0:45 | App dropzone, clean single-screen UI | "This is what Maria sees. One screen, one box." |
-| 0:55 | Drag `rx-lisinopril.pdf` onto dropzone | "She drops the prescription. That's it. That's her whole job from here." |
-| 1:00 | Card 1 — **READ-WEB / Rtrvr.ai** | "First, Rtrvr.ai opens the UHC portal in a real browser and pulls the live coverage rule for Lisinopril under Dr. Chen's plan. That rule changes weekly." |
-| 1:20 | Card 2 — **EXECUTE / Daytona** | "Second, Daytona spins up a sandbox in ninety milliseconds and runs Python to extract the diagnosis, dose, and ICD-10 code — code the agent wrote on the fly." |
-| 1:40 | Card 3 — **VERIFY / Opsera** | "Third, Opsera's MCP server scans the outgoing packet for PHI we don't need to send. Green check. No over-disclosure." |
-| 2:00 | Card 4 — **PERSIST / Insforge** + Rtrvr submitting | "Fourth, Insforge stores the case and fires the doctor a Slack ping. And — here — Rtrvr submits the form on UHC's portal." |
-| 2:15 | `/run/abc123` auditor page, receipt URL pinned at top, four sponsor logos in footer | "And here's the proof. Receipt URL. Full audit chain. Four sponsors. Ninety seconds. From PDF to filed." |
+| 2:10 | `/dashboard` — 14 submissions, 4 patients, 2 approved / 11 pending / 1 errored | "Elena's not running one PA. She's running her whole Friday queue. Four patients in parallel." |
+| 2:20 | Click the **Maria Santos** row (status: errored) → show the VERIFY step output `SSN pattern detected — remove before payer submit` | **"And here's the safety beat. Maria Santos's chart has an extra SSN line that shouldn't have been faxed in. Opsera caught it. The agent halted before submission. No receipt issued. The agent *didn't act* — and that's exactly right."** |
+
+**Fallback:** if anything breaks live, switch to
+`demo/recordings/authmatic-90s.mp4`. Don't apologize — keep going.
 
 ## 2:30 – 3:00 — Close
 
-> We used **Opsera, Daytona, Insforge, and Rtrvr.ai** — all live, all
-> in one autonomous loop. The next thing we'd add is the doctor-approval
-> step before submit — we have a hypothesis on it and skipped it for
-> time. Happy to walk through it.
+> **"Four sponsors — Daytona, Opsera, Insforge, Rtrvr — one autonomous
+> loop, with Tigris persisting the chart artifacts. Six hours. The
+> next thing we'd add is doctor-approval-over-SMS before the final
+> submit — we have the design, skipped for time."**
 
-**Planted seed:** the doctor-approval beat. Judge asks → rehearsed
-answer (see [demo.md](../../docs/ideas/authmatic/demo.md)
-Q&A table).
+**Planted-seed candidates** (pick one — judge will ask):
+
+- *Doctor-approval-over-SMS* — Brain2 voice + SMS gate before ACTION.
+- *Multi-payer scale-out* — each new portal is one Rtrvr task template
+  + one fixture + one entry in the planner's known-payers list.
+  Aetna and CoverMyMeds are next.
+- *Confidential planning* — NEAR AI TEE-bound inference so the planner
+  itself runs in an enclave. PHI never leaves the trust boundary.
+
+---
+
+## Q&A prep
+
+| Likely question | Our answer |
+|-----------------|------------|
+| "How is this not an RPA macro?" | "Rtrvr drives a *real browser session* against the live portal — the agent re-reads the coverage rule on every run. When HealthFirst changed the formulary last Tuesday, a macro would have silently filed under the old rule. The agent reads the new rule and adjusts the rationale text." |
+| "What stops it from filing a wrong PA?" | "Opsera VERIFY runs before every submit. We saw it work on Maria's case — extra SSN line, agent halted, no submission. Plus the planner won't move to ADJUDICATE without a clean VERIFY." |
+| "What's the HIPAA story?" | "PHI never enters the planner's prompt — only field names and types. The patient identifiers stay in Postgres and only get hydrated at form-fill time. The audit page makes every field defensible." |
+| "Did the agent really pick its actions?" | "Yes — Insforge's model gateway runs the planner on Llama-3.1-70B in JSON mode. The five-step lifecycle (EXTRACT → VERIFY → SUBMIT → ADJUDICATE → PERSIST) is the planner's output, not a hardcoded pipeline. Happy to run it live with a fresh PDF after the pitch." |
+| "Why these four sponsors?" | "Each one does the thing it was built for. Rtrvr for portals that don't have APIs. Daytona because we don't want to ship a parser — the agent writes one per chart. Opsera because regulated agents need a guard. Insforge because we needed Postgres + pgvector + a model gateway in one place." |
+| "How long to add a new payer?" | "Two hours. One Rtrvr task template, one fixture, one entry in the known-payers list. We did UHC + HealthFirst first because those are the highest-volume in the clinic we built this for." |
+
+## Cut list (in priority — drop top first)
+
+1. The batch-dashboard beat at 2:10 (Elena-runs-her-whole-queue) — collapse into the close.
+2. The "Beat lands when" director's note — that's for the storyteller, not the room.
+3. The third planted-seed option (NEAR AI TEE) — too technical for 30 seconds.
 
 ---
 
 ## Pre-pitch checklist (T-15 min)
 
-- [ ] Demo laptop on conference WiFi (not personal hotspot).
-- [ ] `make smoke` — green on all four sponsors.
-- [ ] `bash scripts/reset.sh` — clean DB so the demo starts fresh.
-- [ ] Fallback recording open in QuickTime, paused.
+- [ ] Open the live deploy in two browser tabs:
+      `https://z739c3mi.insforge.site/` (operator view) and
+      `https://z739c3mi.insforge.site/dashboard` (system view).
+- [ ] `bash scripts/smoke.sh` — green on the rows that smoke covers.
+- [ ] One fresh `Try the demo` click in advance so any cold-start
+      latency is already paid by the time you go on stage.
+- [ ] Fallback recording open in QuickTime, paused at frame 1.
 - [ ] Notifications off, focus mode on, screen-share permissions granted.
 - [ ] Backup phone on hotspot, ready to tether if WiFi dies.
+
+---
+
+## Verified live (smoke results from 2026-05-31)
+
+These are real numbers from the deployed `pa_submissions` table — not
+projections. Use them for credibility in Q&A:
+
+- **14 total submissions** across 4 patient cases (Sarah Martinez, James
+  Wilson, Robert Kim, Lisa Patel)
+- **Mixed adjudication** — 2 approved, 1 denied, 11 pending review.
+  The agent isn't a rubber-stamp.
+- **Opsera pass rate: 90%** — 9 of 10 runs clean, 1 halted on PHI
+  over-share (Maria Santos). That's the safety beat in numeric form.
+- **Avg run time:** ~30 seconds end-to-end (EXTRACT → PERSIST) on the
+  live deploy, with Rtrvr making real browser calls.

@@ -3,7 +3,9 @@ import { isDemoFixtureMode } from "../demo-mode";
 
 export type VerifyResult = {
   passed: boolean;
-  source: "opsera_mcp" | "opsera_rules";
+  // "opsera_mcp"                       — Opsera MCP responded with a real result
+  // "local_rules_opsera_unreachable"   — MCP attempted, failed; local PHI rules ran
+  source: "opsera_mcp" | "local_rules_opsera_unreachable";
   flagged_fields: string[];
   notes: string;
   opsera?: Record<string, unknown>;
@@ -42,7 +44,7 @@ function localPhiRules(payload: PaFormPayload): VerifyResult {
 
   return {
     passed: flagged.length === 0,
-    source: "opsera_rules",
+    source: "local_rules_opsera_unreachable",
     flagged_fields: flagged,
     notes:
       flagged.length === 0

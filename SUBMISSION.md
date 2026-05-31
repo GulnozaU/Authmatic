@@ -92,7 +92,7 @@ Next.js, FastAPI, Python, TypeScript, Tailwind CSS, PostgreSQL, pgvector, Llama-
 
 ## Sponsor APIs used (mark each)
 
-- [x] Opsera (MCP — PHI exposure scan)
+- [x] Opsera (MCP — PHI exposure scan; falls back to local rules when MCP unreachable, labeled `local_rules_opsera_unreachable` on the audit page)
 - [x] Daytona (sandboxed EXECUTE)
 - [x] Insforge (Postgres + pgvector + storage + edge fn + model gateway)
 - [x] Rtrvr.ai (READ-WEB + form FILE)

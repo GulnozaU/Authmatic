@@ -151,7 +151,15 @@ export default function RunPage() {
               </li>
               <li>
                 Opsera — compliance verify
-                {steps.find((s) => s.step_no === 2)?.tool_output?.passed ? " ✓" : ""}
+                {(() => {
+                  const out = steps.find((s) => s.step_no === 2)?.tool_output as
+                    | { passed?: boolean; source?: string }
+                    | undefined;
+                  if (!out?.passed) return "";
+                  return out.source === "opsera_mcp"
+                    ? " ✓ MCP"
+                    : " ✓ (local fallback — MCP unreachable)";
+                })()}
               </li>
               <li>
                 Rtrvr —{" "}
