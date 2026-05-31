@@ -21,8 +21,8 @@ cp .env.example .env
 # Fill: INSFORGE_*, TIGRIS_*, RTRVR_*, WEB_URL, PORTAL_URL
 ```
 
-Demo data: `mock/healthfirst-case.json`
-Demo PDFs: `assets/demo/*.pdf`
+Demo data: `demo/sarah-martinez.json`
+Demo PDFs: `demo/pdfs/*.pdf`
 
 ---
 
@@ -40,7 +40,7 @@ Demo PDFs: `assets/demo/*.pdf`
 - [ ] `GET /api/stream/:id` → SSE stub (4 steps)
 - [ ] `GET /health` → 200
 
-**Both:** Agree on field IDs in portal ↔ `mock/healthfirst-case.json`.
+**Both:** Agree on field IDs in portal ↔ `demo/sarah-martinez.json`.
 
 ---
 
@@ -97,7 +97,7 @@ async def submit_pa_form(portal_url: str, fields: dict) -> dict:
 
 ## Run-through checklist (done = stop building)
 
-- [ ] Drag both PDFs from `assets/demo/` onto dropzone
+- [ ] Drag both PDFs from `demo/pdfs/` onto dropzone
 - [ ] 4 SSE steps appear within 90s
 - [ ] Rtrvr fills mock portal (or recording plays)
 - [ ] Success page shows `PA-2026-00451`

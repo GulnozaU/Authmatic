@@ -47,3 +47,16 @@ Agent must call adjudicate separately — that simulates payer review.
 `patient_name`, `dob`, `member_id`, `diagnosis`, `medication`, `dosage`, `provider_name`, `justification`
 
 Submit button: `#submit-prior-auth`
+
+---
+
+## Related folders
+
+| Folder | Purpose |
+|--------|---------|
+| [../../handoff/](../../handoff/) | Teammate docs |
+| [../../demo/](../../demo/) | Sarah PDFs + fixture JSON |
+| [../../insurance/](../../insurance/) | HealthFirst portal spec |
+| [../../docs/insforge.md](../../docs/insforge.md) | InsForge setup |
+
+**Live:** https://fj245m46.insforge.site

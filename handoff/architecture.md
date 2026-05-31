@@ -57,7 +57,7 @@ Stream each step to UI via SSE.
 
 ## Mock portal contract
 
-Rtrvr and the form **must agree on field names**. Defined in `mock/healthfirst-case.json`:
+Rtrvr and the form **must agree on field names**. Defined in `demo/sarah-martinez.json`:
 
 | Field ID | Example value |
 |----------|---------------|

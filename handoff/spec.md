@@ -7,7 +7,7 @@
 **Primary persona:** Maria, medical assistant at Dr. Chen's clinic in Oakland.
 She files prior auths by hand into payer portals with no API.
 
-**Demo patient:** Sarah Martinez — synthetic data only (see `mock/healthfirst-case.json`).
+**Demo patient:** Sarah Martinez — synthetic data only (see `demo/sarah-martinez.json`).
 
 ## Problem (one slice)
 
@@ -61,7 +61,7 @@ She files prior auths by hand into payer portals with no API.
 
 ## Demo data
 
-All extractable fields live in `mock/healthfirst-case.json`:
+All extractable fields live in `demo/sarah-martinez.json`:
 
 - Patient: Sarah Martinez, DOB 03/14/1986, Member ID HF45821973
 - Insurance: HealthFirst PPO

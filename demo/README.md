@@ -19,7 +19,7 @@ Synthetic patient data and PDFs for the hackathon demo. **Not real PHI.**
 - Chart: `/demo/patient_chart_sarah_martinez.pdf`
 - Prescription: `/demo/prescription_ozempic_martinez.pdf`
 
-(`apps/web/public/demo` symlinks to `demo/pdfs/`)
+(`apps/web/public/demo/` — auto-synced from here via `npm run sync:demo`)
 
 ---
 

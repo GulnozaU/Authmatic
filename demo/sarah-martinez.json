@@ -51,8 +51,8 @@
     "justification"
   ],
   "assets": {
-    "patient_chart": "demo/patient_chart_sarah_martinez.pdf",
-    "prescription": "demo/prescription_ozempic_martinez.pdf",
+    "patient_chart": "demo/pdfs/patient_chart_sarah_martinez.pdf",
+    "prescription": "demo/pdfs/prescription_ozempic_martinez.pdf",
     "storage": "tigris",
     "storage_bucket": "authmatic-demo"
   },

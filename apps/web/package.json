@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "npm run sync:demo && next dev",
+    "build": "npm run sync:demo && next build",
     "start": "next start",
+    "sync:demo": "mkdir -p public/demo && cp ../../demo/pdfs/*.pdf public/demo/",
     "seed:insforge": "node scripts/seed-insforge.mjs",
     "upload:tigris": "node scripts/upload-demo-tigris.mjs"
   },

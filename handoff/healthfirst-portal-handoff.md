@@ -2,8 +2,8 @@
 
 Everything your teammate needs to wire **Rtrvr**, **FastAPI agent**, and sponsor tools on top of the mock insurer portal.
 
-**Machine-readable spec:** [`mock/healthfirst-portal.json`](../mock/healthfirst-portal.json)  
-**Demo patient fixture:** [`mock/healthfirst-case.json`](../mock/healthfirst-case.json)
+**Machine-readable spec:** [`insurance/healthfirst/portal-spec.json`](../insurance/healthfirst/portal-spec.json)  
+**Demo patient fixture:** [`demo/sarah-martinez.json`](../demo/sarah-martinez.json)
 
 ---
 
@@ -235,10 +235,10 @@ sequenceDiagram
 
 | Asset | Path |
 |-------|------|
-| Patient chart PDF | `assets/demo/patient_chart_sarah_martinez.pdf` |
-| Prescription PDF | `assets/demo/prescription_ozempic_martinez.pdf` |
+| Patient chart PDF | `demo/pdfs/patient_chart_sarah_martinez.pdf` |
+| Prescription PDF | `demo/pdfs/prescription_ozempic_martinez.pdf` |
 | Public URLs (web) | `/demo/patient_chart_sarah_martinez.pdf`, `/demo/prescription_ozempic_martinez.pdf` |
-| Fixture JSON | `mock/healthfirst-case.json` |
+| Fixture JSON | `demo/sarah-martinez.json` |
 | TypeScript payload helper | `apps/web/src/lib/demo-case.ts` → `getDemoFormPayload()` |
 
 ---

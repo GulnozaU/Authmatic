@@ -71,7 +71,7 @@
 ### Pre-pitch checklist
 
 - [ ] Render URL loads in < 2s
-- [ ] Demo PDFs in `assets/demo/` ready to drag
+- [ ] Demo PDFs in `demo/pdfs/` ready to drag
 - [ ] Mock portal `/portal/healthfirst/prior-auth` loads standalone
 - [ ] Recording plays in QuickTime
 - [ ] Notifications off, fresh browser profile

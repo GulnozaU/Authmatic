@@ -6,11 +6,11 @@
 
 | # | Risk | Mitigation |
 |---|------|------------|
-| 1 | Rtrvr can't find form fields (wrong `id`/`name`) | Field IDs must match `mock/healthfirst-case.json` exactly |
+| 1 | Rtrvr can't find form fields (wrong `id`/`name`) | Field IDs must match `demo/sarah-martinez.json` exactly |
 | 2 | Conference WiFi kills Rtrvr mid-demo | Pre-record form-fill clip; `DEMO_FIXTURE_MODE=true` fallback |
 | 3 | Portal URL wrong in prod (localhost vs Render) | Set `PORTAL_URL` in `.env` to full public URL before deploy |
 | 4 | SSE stream dies before final event | `/run/:id` re-fetches from InsForge on mount |
-| 5 | PDF extraction fails on stage | Fixture fallback to `mock/healthfirst-case.json` values |
+| 5 | PDF extraction fails on stage | Fixture fallback to `demo/sarah-martinez.json` values |
 
 ---
 
