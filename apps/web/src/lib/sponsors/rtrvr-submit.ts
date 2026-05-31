@@ -58,7 +58,7 @@ export async function submitWithRtrvr(fields: PaFormPayload): Promise<RtrvrResul
         urls: [url],
         response: { verbosity: "final" },
       }),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(12000),
     });
 
     const raw = await res.text();

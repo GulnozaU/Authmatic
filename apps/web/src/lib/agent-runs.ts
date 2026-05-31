@@ -56,6 +56,12 @@ export function getRun(id: string): AgentRun | undefined {
   return store().get(id);
 }
 
+export function listRuns(limit = 20): AgentRun[] {
+  return [...store().values()]
+    .sort((a, b) => b.created_at.localeCompare(a.created_at))
+    .slice(0, limit);
+}
+
 export function updateRun(id: string, patch: Partial<AgentRun>): AgentRun | undefined {
   const run = store().get(id);
   if (!run) return undefined;

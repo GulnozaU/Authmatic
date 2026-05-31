@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AppShell } from "@/components/AppShell";
 import { DEMO_FILES } from "@/lib/demo-case";
 
 export default function HomePage() {
@@ -34,23 +35,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-hf-blue">
-              Authmatic
-            </p>
-            <h1 className="text-xl font-semibold text-hf-navy">Prior Authorization</h1>
-          </div>
-          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-            Demo ready
-          </span>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-3xl px-6 py-12">
-        <p className="text-lg text-slate-600">
+    <AppShell title="New prior authorization">
+        <p className="-mt-2 mb-6 text-base text-[#5b6470]">
           Drop patient documents. The agent extracts data, fills the insurer form, and
           submits — with a full audit trail.
         </p>
@@ -111,7 +97,6 @@ export default function HomePage() {
             prescription
           </a>
         </p>
-      </main>
-    </div>
+    </AppShell>
   );
 }

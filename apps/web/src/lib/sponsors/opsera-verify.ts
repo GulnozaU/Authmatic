@@ -1,4 +1,5 @@
 import type { PaFormPayload } from "../pa-types";
+import { isDemoFixtureMode } from "../demo-mode";
 
 export type VerifyResult = {
   passed: boolean;
@@ -101,7 +102,7 @@ async function mcpRequest(
     method: "POST",
     headers: mcpHeaders(token),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(25000),
+    signal: AbortSignal.timeout(8000),
   });
 
   const text = await res.text();
@@ -168,7 +169,9 @@ function toolArguments(tool: string, payload: PaFormPayload): Record<string, unk
 
 async function callOpseraMcp(payload: PaFormPayload): Promise<Record<string, unknown> | null> {
   const token = process.env.OPSERA_API_TOKEN?.trim();
-  if (!token) return null;
+  if (!token || isDemoFixtureMode() || token.includes("...") || token.length < 40) {
+    return null;
+  }
 
   const list = await mcpRequest(token, "tools/list", {});
   if ("error" in list && !list.result) {

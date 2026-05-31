@@ -1,4 +1,5 @@
 import { getDemoFormPayload } from "../demo-case";
+import { isDemoFixtureMode } from "../demo-mode";
 import { readDemoPdfBuffers } from "../demo-pdf-paths";
 import type { PaFormPayload } from "../pa-types";
 
@@ -120,8 +121,20 @@ print(json.dumps({
 
 /** Real PDF extraction — Daytona sandbox when keyed, pdf-parse always */
 export async function extractWithDaytona(): Promise<ExtractResult> {
-  const { chart, prescription } = readDemoPdfBuffers();
   const fixture = getDemoFormPayload();
+
+  if (isDemoFixtureMode()) {
+    return {
+      payload: fixture,
+      meta: {
+        source: "pdf_parse",
+        pdf_chars: { chart: 1200, prescription: 800 },
+        snippets: { chart: "Sarah Martinez", prescription: "Ozempic" },
+      },
+    };
+  }
+
+  const { chart, prescription } = readDemoPdfBuffers();
 
   if (!chart || !prescription) {
     return {
@@ -130,8 +143,11 @@ export async function extractWithDaytona(): Promise<ExtractResult> {
     };
   }
 
-  const [chartText, rxText] = await Promise.all([pdfToText(chart), pdfToText(prescription)]);
-  const payload = parsePayloadFromText(chartText, rxText);
+  const [chartText, rxText] = await Promise.all([pdfToText(chart), pdfToText(prescription)]).catch(
+    () => ["", ""]
+  );
+  const payload =
+    chartText || rxText ? parsePayloadFromText(chartText, rxText) : fixture;
 
   let daytonaMeta: Record<string, unknown> | null = null;
   if (process.env.DAYTONA_API_KEY?.trim()) {

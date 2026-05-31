@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { defaultPayload } from "@/lib/agent-orchestrator";
-import { createRun } from "@/lib/agent-runs";
+import { defaultPayload, runAgentPipeline } from "@/lib/agent-orchestrator";
+import { createRun, getRun } from "@/lib/agent-runs";
 
 export async function POST(request: Request) {
   const runId = randomUUID();
@@ -18,6 +18,9 @@ export async function POST(request: Request) {
 
   const form_payload = defaultPayload();
   createRun(runId, form_payload);
+
+  // Start pipeline immediately so the run isn't stuck waiting for SSE connect.
+  void runAgentPipeline(runId, form_payload, () => {});
 
   return NextResponse.json({
     run_id: runId,

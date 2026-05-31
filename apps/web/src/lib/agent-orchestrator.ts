@@ -10,13 +10,15 @@ import {
 import { createSubmission } from "./submissions";
 import { extractWithDaytona } from "./sponsors/daytona-extract";
 import { verifyWithOpsera } from "./sponsors/opsera-verify";
-import { submitWithRtrvr } from "./sponsors/rtrvr-submit";
+import { submitWithRtrvr, type RtrvrResult } from "./sponsors/rtrvr-submit";
 import {
   persistRunArtifacts,
   uploadRunPdfs,
   type RunTigrisArtifacts,
 } from "./tigris/persist-run";
 import type { PaFormPayload } from "./pa-types";
+
+const pipelines = new Set<string>();
 
 function baseUrl() {
   if (process.env.WEB_URL?.trim()) return process.env.WEB_URL.trim();
@@ -52,24 +54,34 @@ async function emitStep(
   });
 }
 
+export function isPipelineRunning(id: string): boolean {
+  return pipelines.has(id);
+}
+
 export async function runAgentPipeline(
   runId: string,
   _initialPayload: PaFormPayload,
   onEvent: (data: Record<string, unknown>) => void
 ) {
-  createRun(runId, _initialPayload);
+  if (pipelines.has(runId)) return;
+  pipelines.add(runId);
+
+  const existing = getRun(runId);
+  if (!existing) {
+    createRun(runId, _initialPayload);
+  }
+
+  onEvent({ type: "progress", message: "Agent starting…", run: getRun(runId) });
 
   try {
     let tigrisArtifacts: RunTigrisArtifacts | null = null;
-    try {
-      tigrisArtifacts = await uploadRunPdfs(runId);
-    } catch (err) {
-      console.error("[tigris] PDF upload failed:", err);
-    }
+    const tigrisPromise = uploadRunPdfs(runId).catch(() => null);
 
     const extracted = await extractWithDaytona();
     const formPayload = extracted.payload;
     updateRun(runId, { form_payload: formPayload });
+
+    tigrisArtifacts = await tigrisPromise;
 
     const extractOutput: Record<string, unknown> = {
       ...formPayload,
@@ -98,7 +110,6 @@ export async function runAgentPipeline(
       1800
     );
 
-    const verify = await verifyWithOpsera(formPayload);
     await emitStep(
       runId,
       {
@@ -106,11 +117,15 @@ export async function runAgentPipeline(
         verb: "VERIFY",
         sponsor: "Opsera",
         plan: "Opsera MCP security scan + PHI scope check before payer submit.",
-        tool_output: verify,
+        tool_input: { fields: Object.keys(formPayload) },
       },
       onEvent,
-      1400
+      600
     );
+
+    const verify = await verifyWithOpsera(formPayload);
+    updateStep(runId, 2, { tool_output: verify });
+    onEvent({ type: "step", step: getRun(runId)!.steps[1], run: getRun(runId) });
 
     if (!verify.passed) {
       throw new Error(
@@ -122,7 +137,11 @@ export async function runAgentPipeline(
     updateRun(runId, { portal_url: portalPath });
     onEvent({ type: "portal", path: portalPath, run: getRun(runId) });
 
-    const rtrvrPromise = submitWithRtrvr(formPayload);
+    const rtrvrPromise = submitWithRtrvr(formPayload).catch((err) => ({
+      used: false as const,
+      mode: "portal_autofill" as const,
+      error: err instanceof Error ? err.message : "Rtrvr skipped",
+    }));
 
     await emitStep(
       runId,
@@ -134,10 +153,23 @@ export async function runAgentPipeline(
         tool_input: { portal_path: portalPath, fields: formPayload },
       },
       onEvent,
-      2500
+      1200
     );
 
-    const rtrvr = await rtrvrPromise;
+    const rtrvr = await Promise.race<RtrvrResult>([
+      rtrvrPromise,
+      new Promise((resolve) =>
+        setTimeout(
+          () =>
+            resolve({
+              used: false,
+              mode: "portal_autofill",
+              error: "Rtrvr timeout — iframe autofill",
+            }),
+          8000
+        )
+      ),
+    ]);
     const submission = await createSubmission(formPayload);
     const receipt_url = `${baseUrl()}/portal/healthfirst/submission/${submission.reference_id}`;
 
@@ -168,7 +200,7 @@ export async function runAgentPipeline(
       1500
     );
 
-    const reviewMs = 4000;
+    const reviewMs = 2000;
     await adjudicateReference(submission.reference_id, reviewMs);
 
     updateStep(runId, 4, {
@@ -232,6 +264,8 @@ export async function runAgentPipeline(
     const message = err instanceof Error ? err.message : "Agent run failed";
     updateRun(runId, { status: "error", error: message });
     onEvent({ type: "error", message, run: getRun(runId) });
+  } finally {
+    pipelines.delete(runId);
   }
 }
 
