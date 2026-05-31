@@ -2,15 +2,14 @@
 1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
 2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
 3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
-4 0 obj<< /Length 451 >>stream
+4 0 obj<< /Length 365 >>stream
 BT
 /F1 10 Tf
 1 0 0 1 50 760 Tm (PRESCRIPTION — Bay Area Primary Care) Tj
-1 0 0 1 50 747 Tm (Patient: Sarah Martinez | DOB: 03/14/1986 | Member ID: HF45821973) Tj
-1 0 0 1 50 734 Tm (Medication: Ozempic \(semaglutide\) 0.25mg weekly) Tj
-1 0 0 1 50 721 Tm (Provider: Emily Chen, MD | NPI: 1234567890) Tj
-1 0 0 1 50 708 Tm (Justification: Poor glycemic control despite first-line therapy. HbA1c 8.9%.) Tj
-1 0 0 1 50 695 Tm (FOR DEMO PURPOSES ONLY) Tj
+1 0 0 1 50 747 Tm (Patient: Maria Santos | DOB: 11/02/1990 | Member ID: HF33901287) Tj
+1 0 0 1 50 734 Tm (Medication: Ozempic 0.25mg weekly) Tj
+1 0 0 1 50 721 Tm (Justification: Poor glycemic control. Chart note includes SSN 555-12-3456.) Tj
+1 0 0 1 50 708 Tm (FOR DEMO PURPOSES ONLY) Tj
 ET
 endstream endobj
 5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
@@ -21,8 +20,8 @@ xref
 0000000047 00000 n 
 0000000102 00000 n 
 0000000224 00000 n 
-0000000724 00000 n 
+0000000638 00000 n 
 trailer<< /Size 6 /Root 1 0 R >>
 startxref
-792
+706
 %%EOF

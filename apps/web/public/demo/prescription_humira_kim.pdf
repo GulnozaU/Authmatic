@@ -2,14 +2,14 @@
 1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
 2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
 3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
-4 0 obj<< /Length 451 >>stream
+4 0 obj<< /Length 450 >>stream
 BT
 /F1 10 Tf
 1 0 0 1 50 760 Tm (PRESCRIPTION — Bay Area Primary Care) Tj
-1 0 0 1 50 747 Tm (Patient: Sarah Martinez | DOB: 03/14/1986 | Member ID: HF45821973) Tj
-1 0 0 1 50 734 Tm (Medication: Ozempic \(semaglutide\) 0.25mg weekly) Tj
+1 0 0 1 50 747 Tm (Patient: Robert Kim | DOB: 04/05/1968 | Member ID: HF77190234) Tj
+1 0 0 1 50 734 Tm (Medication: Humira \(adalimumab\) 40mg every 2 weeks) Tj
 1 0 0 1 50 721 Tm (Provider: Emily Chen, MD | NPI: 1234567890) Tj
-1 0 0 1 50 708 Tm (Justification: Poor glycemic control despite first-line therapy. HbA1c 8.9%.) Tj
+1 0 0 1 50 708 Tm (Justification: Active RA with inadequate response to methotrexate 12 months.) Tj
 1 0 0 1 50 695 Tm (FOR DEMO PURPOSES ONLY) Tj
 ET
 endstream endobj
@@ -21,8 +21,8 @@ xref
 0000000047 00000 n 
 0000000102 00000 n 
 0000000224 00000 n 
-0000000724 00000 n 
+0000000723 00000 n 
 trailer<< /Size 6 /Root 1 0 R >>
 startxref
-792
+791
 %%EOF
