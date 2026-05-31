@@ -44,7 +44,8 @@ authmatic/
 │   └── agent/        ← FastAPI agent + Rtrvr (teammate, you help)
 ├── assets/demo/      ← Sarah chart + Ozempic prescription PDFs
 ├── mock/
-│   └── healthfirst-case.json   ← single source of truth for demo fields
+│   ├── healthfirst-case.json      ← demo patient + workflow fields
+│   └── healthfirst-portal.json    ← URLs, selectors, API (teammate)
 ├── spec.md           ← what we ship (teammate)
 ├── architecture.md   ← system design (teammate)
 ├── implementation.md ← build plan (teammate)
@@ -98,6 +99,7 @@ cp .env.example .env   # fill sponsor keys
 Demo PDFs: `assets/demo/patient_chart_sarah_martinez.pdf`, `assets/demo/prescription_ozempic_martinez.pdf`
 
 Field reference: `mock/healthfirst-case.json`  
+**Portal handoff (teammate):** [docs/healthfirst-portal-handoff.md](docs/healthfirst-portal-handoff.md) · selectors: [mock/healthfirst-portal.json](mock/healthfirst-portal.json)  
 InsForge setup: [docs/insforge.md](docs/insforge.md) · Tigris: [docs/tigris.md](docs/tigris.md)
 
 **Team handoff PDF:** [docs/authmatic-team-handoff.pdf](docs/authmatic-team-handoff.pdf) — what we have, what backend needs, sponsor env vars.
