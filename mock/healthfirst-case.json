@@ -51,7 +51,14 @@
     "justification"
   ],
   "assets": {
-    "patient_chart": "assets/demo/patient_chart_sarah_martinez.pdf",
-    "prescription": "assets/demo/prescription_ozempic_martinez.pdf"
-  }
+    "patient_chart": "demo/patient_chart_sarah_martinez.pdf",
+    "prescription": "demo/prescription_ozempic_martinez.pdf",
+    "storage_bucket": "authmatic-demo",
+    "storage_host": "https://fj245m46.us-east.insforge.app"
+  },
+  "insforge": {
+    "project_url": "https://fj245m46.us-east.insforge.app",
+    "tables": ["pa_submissions", "prior_auths", "agent_events", "demo_cases"],
+    "storage_bucket": "authmatic-demo"
+  },
 }

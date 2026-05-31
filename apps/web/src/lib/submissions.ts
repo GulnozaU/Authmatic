@@ -1,78 +1,114 @@
-import fs from "fs";
-import path from "path";
 import type { PaFormPayload, PaSubmission, PaStatus } from "./pa-types";
+import { getInsForgeAdmin, isInsForgeConfigured } from "./insforge/admin";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "submissions.json");
+type DbRow = {
+  reference_id: string;
+  patient_name: string;
+  dob: string;
+  member_id: string;
+  diagnosis: string;
+  medication: string;
+  dosage: string;
+  provider_name: string;
+  justification: string;
+  status: PaStatus;
+  submitted_at: string;
+  under_review_at?: string | null;
+  decided_at?: string | null;
+  decision_notes?: string | null;
+  denial_reason?: string | null;
+  reviewer_id?: string | null;
+};
 
-let counter = 451;
-
-function ensureStore(): Map<string, PaSubmission> {
-  if (!globalThis.__paStore) {
-    globalThis.__paStore = new Map<string, PaSubmission>();
-    try {
-      if (fs.existsSync(DATA_FILE)) {
-        const rows = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8")) as PaSubmission[];
-        for (const row of rows) {
-          globalThis.__paStore.set(row.reference_id, row);
-          const num = parseInt(row.reference_id.replace(/\D/g, ""), 10);
-          if (num >= counter) counter = num + 1;
-        }
-      }
-    } catch {
-      /* fresh store */
-    }
-  }
-  return globalThis.__paStore;
-}
-
-function persist(store: Map<string, PaSubmission>) {
-  try {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-    fs.writeFileSync(DATA_FILE, JSON.stringify([...store.values()], null, 2));
-  } catch {
-    /* in-memory only */
-  }
-}
-
-export function nextReferenceId(): string {
-  const id = `PA-2026-${String(counter).padStart(5, "0")}`;
-  counter += 1;
-  return id;
-}
-
-export function createSubmission(payload: PaFormPayload): PaSubmission {
-  const store = ensureStore();
-  const reference_id = nextReferenceId();
-  const submission: PaSubmission = {
-    ...payload,
-    reference_id,
-    status: "pending_review",
-    submitted_at: new Date().toISOString(),
+function rowToSubmission(row: DbRow): PaSubmission {
+  return {
+    reference_id: row.reference_id,
+    patient_name: row.patient_name,
+    dob: row.dob,
+    member_id: row.member_id,
+    diagnosis: row.diagnosis,
+    medication: row.medication,
+    dosage: row.dosage,
+    provider_name: row.provider_name,
+    justification: row.justification,
+    status: row.status,
+    submitted_at: row.submitted_at,
+    under_review_at: row.under_review_at ?? undefined,
+    decided_at: row.decided_at ?? undefined,
+    decision_notes: row.decision_notes ?? undefined,
+    denial_reason: row.denial_reason ?? undefined,
+    reviewer_id: row.reviewer_id ?? undefined,
   };
-  store.set(reference_id, submission);
-  persist(store);
-  return submission;
 }
 
-export function getSubmission(reference_id: string): PaSubmission | undefined {
-  return ensureStore().get(reference_id);
+async function nextReferenceId(): Promise<string> {
+  const insforge = getInsForgeAdmin();
+  const { data, error } = await insforge.database
+    .from("pa_submissions")
+    .select("reference_id")
+    .order("reference_id", { ascending: false })
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+
+  let counter = 451;
+  const latest = data?.[0]?.reference_id as string | undefined;
+  if (latest) {
+    const num = parseInt(latest.replace(/\D/g, ""), 10);
+    if (num >= counter) counter = num + 1;
+  }
+
+  return `PA-2026-${String(counter).padStart(5, "0")}`;
 }
 
-export function updateSubmission(
+export async function createSubmission(payload: PaFormPayload): Promise<PaSubmission> {
+  const insforge = getInsForgeAdmin();
+  const reference_id = await nextReferenceId();
+  const submitted_at = new Date().toISOString();
+
+  const row = {
+    reference_id,
+    ...payload,
+    status: "pending_review" as PaStatus,
+    submitted_at,
+  };
+
+  const { data, error } = await insforge.database
+    .from("pa_submissions")
+    .insert([row])
+    .select("*");
+
+  if (error) throw new Error(error.message);
+  return rowToSubmission(data![0] as DbRow);
+}
+
+export async function getSubmission(reference_id: string): Promise<PaSubmission | null> {
+  const insforge = getInsForgeAdmin();
+  const { data, error } = await insforge.database
+    .from("pa_submissions")
+    .select("*")
+    .eq("reference_id", reference_id)
+    .limit(1);
+
+  if (error) throw new Error(error.message);
+  if (!data?.length) return null;
+  return rowToSubmission(data[0] as DbRow);
+}
+
+export async function updateSubmission(
   reference_id: string,
   patch: Partial<PaSubmission>
-): PaSubmission | undefined {
-  const store = ensureStore();
-  const existing = store.get(reference_id);
-  if (!existing) return undefined;
-  const updated = { ...existing, ...patch };
-  store.set(reference_id, updated);
-  persist(store);
-  return updated;
+): Promise<PaSubmission | null> {
+  const insforge = getInsForgeAdmin();
+  const { data, error } = await insforge.database
+    .from("pa_submissions")
+    .update(patch)
+    .eq("reference_id", reference_id)
+    .select("*");
+
+  if (error) throw new Error(error.message);
+  if (!data?.length) return null;
+  return rowToSubmission(data[0] as DbRow);
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __paStore: Map<string, PaSubmission> | undefined;
-}
+export { isInsForgeConfigured };

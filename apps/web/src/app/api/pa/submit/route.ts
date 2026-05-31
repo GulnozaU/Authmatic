@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     payload = formDataToPayload(form);
   }
 
-  const submission = createSubmission(payload);
+  const submission = await createSubmission(payload);
   const base = request.nextUrl.origin;
 
   const accept = request.headers.get("accept") ?? "";

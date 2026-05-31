@@ -24,16 +24,12 @@
    EXTRACT       SUBMIT         PERSIST
        │             │              │
        ▼             ▼              ▼
-  pdfplumber/    ┌─────────┐   ┌──────────┐   ┌──────────┐
-  LLM + fixture  │ Rtrvr   │   │ Tigris   │   │ InsForge │
-                 │ /agent  │   │ PDFs +   │   │ workflow │
-                 │ fills   │   │ receipts │   │ + logs   │
-                 │ mock    │   └──────────┘   └──────────┘
-                 │ portal  │
-                 └────┬────┘
-                      ▼
-              /portal/healthfirst/prior-auth
-              (self-hosted mock — NOT real payer)
+  pdfplumber/    ┌─────────┐   ┌──────────────────────────┐
+  LLM + fixture  │ Rtrvr   │   │ InsForge                 │
+                 │ /agent  │   │ Postgres + Storage       │
+                 │ fills   │   │ pa_submissions, PDFs,    │
+                 │ mock    │   │ prior_auths, agent_events│
+                 │ portal  │   └──────────────────────────┘
 ```
 
 ## Components
@@ -42,8 +38,7 @@
 |-----------|-------|------|---------|
 | Web UI + portal | You | Next.js + Tailwind | Dropzone, audit, **mock HealthFirst form** |
 | Agent service | Teammate | FastAPI | Extract, orchestrate Rtrvr, persist |
-| Object storage | Teammate | Tigris | Charts, prescriptions, receipts |
-| Workflow DB | Teammate | InsForge | Runs, agent events, submission logs |
+| Object storage + DB | Both | InsForge | PDFs, submissions, runs, agent_events |
 | Browser agent | Teammate | Rtrvr | Fill + submit mock portal |
 | Hosting | Either | Render | Public demo URL |
 
@@ -55,7 +50,7 @@
 | 2 | PREPARE | InsForge | Create run record, log plan |
 | 3 | SUBMIT | Rtrvr | Open mock portal, fill fields, click Submit → **Pending Review** |
 | 4 | ADJUDICATE | Mock payer API | `POST /api/pa/{ref}/adjudicate` — medical review → Approved/Denied |
-| 5 | PERSIST | Tigris + InsForge | Store receipt JSON, mark run submitted |
+| 5 | PERSIST | InsForge | Store receipt, PDFs, agent_events |
 
 Stream each step to UI via SSE.
 
@@ -125,8 +120,7 @@ User → upload PDFs → POST /api/run → run_id
 | If down | Action |
 |---------|--------|
 | Rtrvr | `DEMO_FIXTURE_MODE=true` + pre-recorded form-fill clip |
-| Tigris | Local file path in audit; mention in Q&A |
-| InsForge | SQLite/local JSON fallback for `/run/:id` |
+| InsForge | Local JSON fallback for `/run/:id` only |
 | Render | localhost demo + recording |
 
 ## Not building

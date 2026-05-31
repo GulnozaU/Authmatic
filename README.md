@@ -6,7 +6,9 @@
 
 **Track:** Healthcare · **Theme:** Agents That Act
 **Demo patient:** Sarah Martinez · Ozempic · HealthFirst PPO
-**Stack:** Rtrvr · Tigris · InsForge · Render
+**Stack:** Opsera · Daytona · InsForge · Rtrvr · Render  
+**InsForge:** linked — `https://fj245m46.us-east.insforge.app` (see `AGENTS.md`)  
+**Repo:** [github.com/GulnozaU/Authmatic](https://github.com/GulnozaU/Authmatic) (`main`) · legacy branch `authmatic0`
 
 ---
 
@@ -67,8 +69,7 @@ authmatic/
 | Sponsor | Does what in demo |
 |---------|-------------------|
 | **Rtrvr** | Browser automation — fills + submits mock portal (**main demo**) |
-| **Tigris** | Stores chart, prescription, submission receipt |
-| **InsForge** | Workflow state, agent events, submission logs |
+| **InsForge** | All data — Postgres + Storage (submissions, PDFs, agent logs) |
 | **Render** | Public deploy — judges get a live URL |
 
 ---
@@ -77,9 +78,8 @@ authmatic/
 
 | Mock | Real |
 |------|------|
-| HealthFirst insurer + portal UI | Rtrvr driving a real browser |
-| Sarah Martinez (synthetic PHI) | Tigris file uploads |
-| Single demo path | InsForge DB writes |
+| HealthFirst insurer company + portal UI | Rtrvr driving a real browser |
+| Sarah Martinez (synthetic PHI) | InsForge Postgres + Storage |
 | | Render deployment |
 
 **Do not** hit real UHC/Aetna portals on stage.
@@ -96,7 +96,8 @@ cp .env.example .env   # fill sponsor keys
 
 Demo PDFs: `assets/demo/patient_chart_sarah_martinez.pdf`, `assets/demo/prescription_ozempic_martinez.pdf`
 
-Field reference: `mock/healthfirst-case.json`
+Field reference: `mock/healthfirst-case.json`  
+InsForge setup: [docs/insforge.md](docs/insforge.md)
 
 **Team handoff PDF:** [docs/authmatic-team-handoff.pdf](docs/authmatic-team-handoff.pdf) — what we have, what backend needs, sponsor env vars.
 

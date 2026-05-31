@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: Promise<{ ref: string }> }
 ) {
   const { ref } = await params;
-  const submission = getSubmission(ref);
+  const submission = await getSubmission(ref);
 
   if (!submission) {
     return NextResponse.json({ error: "Reference ID not found" }, { status: 404 });

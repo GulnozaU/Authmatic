@@ -102,7 +102,7 @@ export async function adjudicateReference(
   reference_id: string,
   reviewDelayMs = 0
 ): Promise<AdjudicationResult | null> {
-  const submission = getSubmission(reference_id);
+  const submission = await getSubmission(reference_id);
   if (!submission) return null;
 
   if (submission.status === "approved" || submission.status === "denied") {
@@ -115,7 +115,7 @@ export async function adjudicateReference(
     };
   }
 
-  updateSubmission(reference_id, {
+  await updateSubmission(reference_id, {
     status: "under_review",
     under_review_at: new Date().toISOString(),
     reviewer_id: "HF-MCR-8842",
@@ -128,7 +128,7 @@ export async function adjudicateReference(
   const evaluation = evaluateSubmission(submission);
   const decided_at = new Date().toISOString();
 
-  updateSubmission(reference_id, {
+  await updateSubmission(reference_id, {
     status: evaluation.status,
     decided_at,
     decision_notes: evaluation.decision_notes,
