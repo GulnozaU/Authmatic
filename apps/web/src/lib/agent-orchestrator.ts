@@ -80,7 +80,7 @@ export async function runAgentPipeline(
 
   try {
     let tigrisArtifacts: RunTigrisArtifacts | null = null;
-    const tigrisPromise = uploadRunPdfs(runId).catch(() => null);
+    const tigrisPromise = uploadRunPdfs(runId, caseId).catch(() => null);
 
     const extracted = await extractWithDaytona(caseId);
     const formPayload = extracted.payload;

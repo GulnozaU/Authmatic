@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { getDemoCase, type DemoCaseId } from "../demo-cases";
 import { isInsForgeConfigured, getInsForgeAdmin } from "../insforge/admin";
 import type { PaFormPayload } from "../pa-types";
 import {
@@ -16,11 +17,6 @@ export type RunTigrisArtifacts = {
   prescription?: TigrisFileRef;
   receipt?: TigrisFileRef;
 };
-
-const DEMO_PDFS = [
-  { filename: "patient_chart_sarah_martinez.pdf", field: "chart" as const },
-  { filename: "prescription_ozempic_martinez.pdf", field: "prescription" as const },
-];
 
 function readDemoPdf(filename: string): Buffer | null {
   const candidates = [
@@ -39,13 +35,20 @@ function readDemoPdf(filename: string): Buffer | null {
   return null;
 }
 
-/** Upload Sarah demo PDFs to Tigris under runs/{runId}/ */
-export async function uploadRunPdfs(runId: string): Promise<RunTigrisArtifacts | null> {
+/** Upload patient PDFs to Tigris under runs/{runId}/ */
+export async function uploadRunPdfs(
+  runId: string,
+  caseId?: DemoCaseId | string | null
+): Promise<RunTigrisArtifacts | null> {
   if (!isTigrisConfigured()) return null;
 
+  const pdfs = getDemoCase(caseId).pdfs;
   const artifacts: RunTigrisArtifacts = { bucket: TIGRIS_BUCKET };
 
-  for (const { filename, field } of DEMO_PDFS) {
+  for (const [field, filename] of [
+    ["chart", pdfs.chart],
+    ["prescription", pdfs.prescription],
+  ] as const) {
     const body = readDemoPdf(filename);
     if (!body) continue;
     const key = `runs/${runId}/${filename}`;
