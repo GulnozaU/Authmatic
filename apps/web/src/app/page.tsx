@@ -21,29 +21,69 @@ const VERB_META: Record<string, { label: string; sponsor: string }> = {
   ACTION: { label: 'ACTION', sponsor: 'Rtrvr.ai' },
 };
 
+type SampleTile = {
+  filename: string;
+  title: string;
+  blurb: string;
+  accentClass: string;
+};
+
+const SAMPLES: SampleTile[] = [
+  {
+    filename: 'rx-lisinopril.pdf',
+    title: 'Happy path',
+    blurb: 'Lisinopril 10mg → UnitedHealthcare. Drops, parses, verifies, files, returns receipt.',
+    accentClass: 'border-good text-good',
+  },
+  {
+    filename: 'rx-ozempic-martinez.pdf',
+    title: 'Different payer',
+    blurb: 'Ozempic for Sarah Martinez on HealthFirst. Proves it routes by member ID, not hardcoded.',
+    accentClass: 'border-accent text-accent',
+  },
+  {
+    filename: 'rx-overshare-demo.pdf',
+    title: 'Safety net',
+    blurb: 'Same Rx with an extra SSN. Opsera flags it, agent halts before submission — no receipt.',
+    accentClass: 'border-amber-400 text-amber-700',
+  },
+];
+
 export default function Home() {
   const router = useRouter();
   const [runId, setRunId] = useState<string | null>(null);
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const onDrop = useCallback(async (files: File[]) => {
-    if (!files.length) return;
+  const startRun = useCallback(async (fetcher: () => Promise<Response>) => {
     setError(null);
     setEvents([]);
-
-    const form = new FormData();
-    form.append('pdf', files[0]);
-
     try {
-      const r = await fetch('/api/run', { method: 'POST', body: form });
+      const r = await fetcher();
       if (!r.ok) throw new Error(await r.text());
       const { run_id } = (await r.json()) as { run_id: string };
       setRunId(run_id);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed');
+      setError(e instanceof Error ? e.message : 'Run failed to start');
     }
   }, []);
+
+  const onDrop = useCallback(
+    async (files: File[]) => {
+      if (!files.length) return;
+      const form = new FormData();
+      form.append('pdf', files[0]);
+      await startRun(() => fetch('/api/run', { method: 'POST', body: form }));
+    },
+    [startRun],
+  );
+
+  const onSample = useCallback(
+    (filename: string) => async () => {
+      await startRun(() => fetch(`/api/sample/${filename}`, { method: 'POST' }));
+    },
+    [startRun],
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -86,9 +126,34 @@ export default function Home() {
         <p className="text-base text-gray-500 mt-3 max-w-prose">
           The agent reads the payer rule, parses the chart, scans for PHI,
           submits the form, and returns a receipt URL — usually under 90
-          seconds. Use synthetic patient data only.
+          seconds.
+        </p>
+        <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
+          <span aria-hidden>⚠</span>
+          Synthetic data only · all patients, member IDs, and NPIs are fictitious
         </p>
       </header>
+
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {SAMPLES.map((s) => (
+          <button
+            key={s.filename}
+            type="button"
+            onClick={onSample(s.filename)}
+            disabled={runId !== null && events.length < 5}
+            className={`group rounded-lg border-2 border-l-4 bg-white p-4 text-left transition hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${s.accentClass}`}
+          >
+            <p className="text-xs font-semibold uppercase tracking-widest">
+              Try the {s.title.toLowerCase()}
+            </p>
+            <p className="mt-2 font-serif text-base text-ink">{s.title}</p>
+            <p className="mt-1 text-xs text-gray-500 leading-relaxed">{s.blurb}</p>
+            <p className="mt-3 text-xs text-gray-400 group-hover:text-ink">
+              {s.filename} →
+            </p>
+          </button>
+        ))}
+      </section>
 
       <section
         {...getRootProps()}
@@ -100,10 +165,10 @@ export default function Home() {
       >
         <input {...getInputProps()} />
         <p className="font-serif text-xl text-ink">
-          {isDragActive ? 'Drop the prescription PDF…' : 'Drop a prescription PDF here'}
+          {isDragActive ? 'Drop the prescription PDF…' : 'Or drop your own prescription PDF'}
         </p>
         <p className="text-sm text-gray-500 mt-2">
-          or click to choose a file
+          click to choose a file
         </p>
       </section>
 

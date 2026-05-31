@@ -154,6 +154,9 @@ def _extract_letterhead(text: str) -> dict:
         ("icd10", r"Primary Diagnosis \(ICD-?10\)\s+([A-Z]\d{2}(?:\.\d+)?)"),
         ("member_id", r"Member ID:?\s+(\S+)"),
         ("patient_name", r"Patient Name\s+(.+?)(?:\s{2,}|\n|$)"),
+        # SSN is an over-disclosure field: it has no place on a PA submission.
+        # If the parser picks it up, Opsera VERIFY will catch it downstream.
+        ("patient_ssn", r"SSN:?\s+(\d{3}-\d{2}-\d{4}|\d{9})"),
     ]
     for key, pat in patterns:
         m = re.search(pat, text)
@@ -199,6 +202,7 @@ def _extract_simple(text: str) -> dict:
         ("icd10", r"ICD-?10[: ]+([A-Z]\d{2}(?:\.\d+)?)"),
         ("member_id", r"Member ID:\s+(\S+)"),
         ("patient_name", r"Name:\s+(.+?)(?:\n|$)"),
+        ("patient_ssn", r"SSN:?\s+(\d{3}-\d{2}-\d{4}|\d{9})"),
     ]
     for key, pat in patterns:
         m = re.search(pat, text)

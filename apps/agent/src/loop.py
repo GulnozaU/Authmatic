@@ -20,6 +20,7 @@ from .insforge_client import plan_next_step
 from .persist import (
     append_event,
     fetch_plan_id_by_member_id,
+    fetch_similar_approvals,
     link_patient_by_member_id,
     update_status,
 )
@@ -96,8 +97,15 @@ async def run_agent(
                         f"Opsera flagged PHI fields: {tool_output.get('flagged_fields')}"
                     )
             elif verb == "PERSIST":
+                # RAG step: pull similar approved PAs out of the
+                # prior_auths table so the drafted rationale can cite them.
+                similar = await fetch_similar_approvals(
+                    pool,
+                    drug_name=parsed.get("drug_name"),
+                    icd10=parsed.get("icd10"),
+                )
                 rationale = args.get("rationale") or _draft_rationale(
-                    parsed, coverage_rule
+                    parsed, coverage_rule, similar,
                 )
                 # If the PDF identified a known patient by member_id, swap
                 # the prior_auths.patient_id over from the fallback row.
@@ -117,6 +125,15 @@ async def run_agent(
                 tool_output = {
                     "persisted": True,
                     "linked_patient": resolved_patient_id is not None,
+                    "similar_approvals": [
+                        {
+                            "ref": s["id"][:8],
+                            "drug": s["drug_name"],
+                            "icd10": s["diagnosis_code"],
+                            "rank": s["rank"],
+                        }
+                        for s in similar
+                    ],
                     "rationale": rationale[:120] + "…",
                 }
             else:
@@ -170,24 +187,44 @@ async def run_agent(
 
 
 def _build_packet(parsed: dict, rationale: str | None) -> dict:
+    # Pass through every parsed field. Opsera VERIFY filters against the
+    # allowlist on its end — over-disclosure (e.g. patient_ssn) gets flagged
+    # there, not here. The whole point of the safety layer is to catch what
+    # the agent forgets to drop.
     return {
         "drug_name": parsed.get("drug_name"),
+        "drug_ndc": parsed.get("drug_ndc"),
         "dose": parsed.get("dose"),
         "diagnosis_code": parsed.get("icd10"),
+        "member_id": parsed.get("member_id"),
+        "full_name": parsed.get("patient_name"),
+        "patient_ssn": parsed.get("patient_ssn"),
         "rationale": rationale,
     }
 
 
-def _draft_rationale(parsed: dict, coverage_rule: dict | None) -> str:
+def _draft_rationale(
+    parsed: dict,
+    coverage_rule: dict | None,
+    similar: list[dict] | None = None,
+) -> str:
     """In production the planner LLM drafts this. For the demo path we use a
-    deterministic template so the demo never produces gibberish."""
+    deterministic template so the demo never produces gibberish. If similar
+    past-approved PAs were found, cite them as precedent."""
     drug = parsed.get("drug_name", "the requested medication")
     dx = parsed.get("icd10", "the clinical diagnosis")
     criteria = (coverage_rule or {}).get(
         "criteria_text", "the plan's coverage criteria"
     )
-    return (
+    base = (
         f"Patient meets medical-necessity criteria for {drug}. "
         f"Diagnosis {dx} satisfies {criteria}. First-line alternatives "
         f"have been tried and documented in the chart."
     )
+    if similar:
+        precedents = "; ".join(
+            f"{s['drug_name']} for {s['diagnosis_code']} (ref {s['id'][:8]})"
+            for s in similar[:2]
+        )
+        base += f" Precedent: {len(similar)} similar approved PAs on file — {precedents}."
+    return base

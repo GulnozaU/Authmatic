@@ -7,7 +7,9 @@ replay events from durable state.
 
 from __future__ import annotations
 
+import json
 from datetime import date
+from pathlib import Path
 
 import asyncpg
 
@@ -219,5 +221,85 @@ async def poll_events_since(
             ORDER BY step_no
             """,
             run_id, after_step,
+        )
+    return [dict(r) for r in rows]
+
+
+# ─── RAG over past approvals ─────────────────────────────────────────────
+
+
+_DRUG_ALIASES_CACHE: dict[str, set[str]] | None = None
+
+
+def _drug_aliases() -> dict[str, set[str]]:
+    """brand-or-generic name (lowercased) → all known names for the same drug.
+
+    Reads from mock_data.json so the brand/generic mapping stays in one
+    canonical place. Ozempic↔semaglutide, Humira↔adalimumab, etc.
+    """
+    global _DRUG_ALIASES_CACHE
+    if _DRUG_ALIASES_CACHE is not None:
+        return _DRUG_ALIASES_CACHE
+
+    path = (
+        Path(__file__).resolve().parents[3]
+        / "assets" / "fixtures" / "mock_data.json"
+    )
+    out: dict[str, set[str]] = {}
+    try:
+        data = json.loads(path.read_text())
+    except FileNotFoundError:
+        _DRUG_ALIASES_CACHE = out
+        return out
+
+    for d in data.get("drugs", []):
+        names = {d.get("brand_name"), d.get("generic_name")}
+        names.discard(None)
+        if not names:
+            continue
+        lowered = {n.lower() for n in names}
+        for n in lowered:
+            out[n] = lowered
+    _DRUG_ALIASES_CACHE = out
+    return out
+
+
+async def fetch_similar_approvals(
+    pool: asyncpg.Pool,
+    drug_name: str | None,
+    icd10: str | None,
+    limit: int = 3,
+) -> list[dict]:
+    """Return prior approved PAs whose drug (incl. brand↔generic aliases) or
+    ICD-10 matches the current request. Same-drug matches outrank
+    same-diagnosis-only matches.
+
+    SQL-keyed retrieval today; the schema and `pa_embeddings` table are in
+    place for swapping to pgvector cosine similarity in live mode once a
+    real embedding API is wired up.
+    """
+    if not (drug_name or icd10):
+        return []
+
+    key = (drug_name or "").lower()
+    aliases = _drug_aliases().get(key, {key} if key else set())
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT id::text, drug_name, diagnosis_code, rationale, receipt_url,
+              CASE WHEN lower(drug_name) = ANY($1::text[]) THEN 2
+                   WHEN diagnosis_code = $2                THEN 1
+                   ELSE 0
+              END AS rank
+            FROM prior_auths
+            WHERE status = 'approved'
+              AND (lower(drug_name) = ANY($1::text[]) OR diagnosis_code = $2)
+            ORDER BY rank DESC, created_at DESC
+            LIMIT $3
+            """,
+            list(aliases),
+            icd10,
+            limit,
         )
     return [dict(r) for r in rows]
