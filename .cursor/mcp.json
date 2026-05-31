@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "opsera": {
+      "type": "streamable-http",
+      "url": "https://agent.opsera.ai/mcp"
+    }
+  }
+}
