@@ -120,7 +120,15 @@ https://github.com/r2st/Authmatic
 ## Live demo URL
 
 ```
-<paste Render/Vercel URL — or "localhost only, see screencast">
+Primary:   https://z739c3mi.insforge.site/
+Alternate: https://fj245m46.insforge.site/
+
+The primary surface exposes three one-click scenarios, each proving a distinct capability:
+- Happy path   — Lisinopril 10mg → UnitedHealthcare. Drops, parses, verifies, files, returns receipt.
+- Diff payer   — Ozempic for Sarah Martinez → HealthFirst. Proves routing by member ID, not hardcoded payer.
+- Safety net   — Same Rx with an extra SSN. Opsera flags patient_ssn; agent halts before submission, no receipt issued.
+
+The alternate deploy runs the same backend with a single happy-path surface.
 ```
 
 ## Team
