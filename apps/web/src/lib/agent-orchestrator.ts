@@ -1,6 +1,4 @@
 import { adjudicateReference } from "./adjudication";
-import { getDemoFormPayload } from "./demo-case";
-import type { PaFormPayload } from "./pa-types";
 import {
   appendStep,
   createRun,
@@ -10,6 +8,18 @@ import {
   type AgentStep,
 } from "./agent-runs";
 import { createSubmission } from "./submissions";
+import { extractWithDaytona } from "./sponsors/daytona-extract";
+import { verifyWithOpsera } from "./sponsors/opsera-verify";
+import { submitWithRtrvr, type RtrvrResult } from "./sponsors/rtrvr-submit";
+import {
+  persistRunArtifacts,
+  uploadRunPdfs,
+  type RunTigrisArtifacts,
+} from "./tigris/persist-run";
+import { getDemoFormPayload, submissionPath, type DemoCaseId } from "./demo-cases";
+import type { PaFormPayload } from "./pa-types";
+
+const pipelines = new Set<string>();
 
 function baseUrl() {
   if (process.env.WEB_URL?.trim()) return process.env.WEB_URL.trim();
@@ -45,23 +55,61 @@ async function emitStep(
   });
 }
 
+export function isPipelineRunning(id: string): boolean {
+  return pipelines.has(id);
+}
+
 export async function runAgentPipeline(
   runId: string,
-  formPayload: PaFormPayload,
-  onEvent: (data: Record<string, unknown>) => void
+  _initialPayload: PaFormPayload,
+  onEvent: (data: Record<string, unknown>) => void,
+  options?: { caseId?: DemoCaseId }
 ) {
-  createRun(runId, formPayload);
+  if (pipelines.has(runId)) return;
+  pipelines.add(runId);
+
+  const caseId = options?.caseId;
+  const existing = getRun(runId);
+  if (!existing) {
+    createRun(runId, _initialPayload, caseId);
+  } else if (caseId && !existing.case_id) {
+    updateRun(runId, { case_id: caseId });
+  }
+
+  onEvent({ type: "progress", message: "Agent starting…", run: getRun(runId) });
 
   try {
+    let tigrisArtifacts: RunTigrisArtifacts | null = null;
+    const tigrisPromise = uploadRunPdfs(runId).catch(() => null);
+
+    const extracted = await extractWithDaytona(caseId);
+    const formPayload = extracted.payload;
+    updateRun(runId, { form_payload: formPayload });
+
+    tigrisArtifacts = await tigrisPromise;
+
+    const extractOutput: Record<string, unknown> = {
+      ...formPayload,
+      _extract: extracted.meta,
+    };
+    if (tigrisArtifacts) {
+      extractOutput.tigris = {
+        bucket: tigrisArtifacts.bucket,
+        chart: tigrisArtifacts.chart,
+        prescription: tigrisArtifacts.prescription,
+      };
+      updateRun(runId, { tigris_artifacts: tigrisArtifacts });
+    }
+
     await emitStep(
       runId,
       {
         step_no: 1,
         verb: "EXTRACT",
         sponsor: "Daytona",
-        plan: "Parse patient chart and prescription PDFs; extract diagnosis, drug, and member ID.",
-        tool_input: { patient: "Sarah Martinez", files: 2 },
-        tool_output: formPayload as unknown as Record<string, unknown>,
+        plan: "Parse patient chart and prescription PDFs in Daytona sandbox; extract payer fields.",
+        tool_input: { patient: formPayload.patient_name, files: 2 },
+        tool_output: extractOutput,
       },
       onEvent,
       1800
@@ -73,16 +121,32 @@ export async function runAgentPipeline(
         step_no: 2,
         verb: "VERIFY",
         sponsor: "Opsera",
-        plan: "Scan outgoing packet for PHI over-disclosure before payer submit.",
-        tool_output: { passed: true, flagged_fields: [] },
+        plan: "Opsera MCP security scan + PHI scope check before payer submit.",
+        tool_input: { fields: Object.keys(formPayload) },
       },
       onEvent,
-      1400
+      600
     );
 
-    const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
+    const verify = await verifyWithOpsera(formPayload);
+    updateStep(runId, 2, { tool_output: verify });
+    onEvent({ type: "step", step: getRun(runId)!.steps[1], run: getRun(runId) });
+
+    if (!verify.passed) {
+      throw new Error(
+        `Opsera compliance failed: ${verify.flagged_fields.join("; ") || verify.notes}`
+      );
+    }
+
+    const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}${caseId ? `&case=${caseId}` : ""}`;
     updateRun(runId, { portal_url: portalPath });
     onEvent({ type: "portal", path: portalPath, run: getRun(runId) });
+
+    const rtrvrPromise = submitWithRtrvr(formPayload).catch((err) => ({
+      used: false as const,
+      mode: "portal_autofill" as const,
+      error: err instanceof Error ? err.message : "Rtrvr skipped",
+    }));
 
     await emitStep(
       runId,
@@ -90,21 +154,37 @@ export async function runAgentPipeline(
         step_no: 3,
         verb: "SUBMIT",
         sponsor: "Rtrvr",
-        plan: "Open HealthFirst provider portal, fill prior-auth form, and submit.",
+        plan: "Rtrvr Agent API fills HealthFirst portal; iframe shows live autofill.",
         tool_input: { portal_path: portalPath, fields: formPayload },
       },
       onEvent,
-      2500
+      1200
     );
 
+    const rtrvr = await Promise.race<RtrvrResult>([
+      rtrvrPromise,
+      new Promise((resolve) =>
+        setTimeout(
+          () =>
+            resolve({
+              used: false,
+              mode: "portal_autofill",
+              error: "Rtrvr timeout — iframe autofill",
+            }),
+          8000
+        )
+      ),
+    ]);
     const submission = await createSubmission(formPayload);
-    const receipt_url = `${baseUrl()}/portal/healthfirst/submission/${submission.reference_id}`;
+    const receipt_url = submissionPath(submission.reference_id);
+    const receipt_absolute = `${baseUrl()}${receipt_url}`;
 
     updateStep(runId, 3, {
       tool_output: {
-        reference_id: submission.reference_id,
+        reference_id: rtrvr.reference_id ?? submission.reference_id,
         status: submission.status,
         receipt_url,
+        rtrvr,
       },
     });
     updateRun(runId, {
@@ -126,7 +206,7 @@ export async function runAgentPipeline(
       1500
     );
 
-    const reviewMs = 4000;
+    const reviewMs = 2000;
     await adjudicateReference(submission.reference_id, reviewMs);
 
     updateStep(runId, 4, {
@@ -137,6 +217,40 @@ export async function runAgentPipeline(
       },
     });
 
+    const runBeforePersist = getRun(runId)!;
+    const baseArtifacts: RunTigrisArtifacts = runBeforePersist.tigris_artifacts ?? {
+      bucket: process.env.TIGRIS_BUCKET ?? "authmatic-demo",
+    };
+
+    let persistOutput: Record<string, unknown> = {
+      insforge: "pa_submissions (submit step)",
+      tigris_bucket: baseArtifacts.bucket,
+      reference_id: submission.reference_id,
+    };
+
+    try {
+      const { insforge_updated, artifacts } = await persistRunArtifacts(runId, {
+        reference_id: submission.reference_id,
+        receipt_url: receipt_absolute,
+        form_payload: formPayload,
+        artifacts: baseArtifacts,
+        status: "approved",
+      });
+      updateRun(runId, { tigris_artifacts: artifacts });
+      persistOutput = {
+        insforge: insforge_updated
+          ? "prior_auths + pa_submissions"
+          : "pa_submissions (submit step)",
+        tigris_bucket: artifacts.bucket,
+        chart: artifacts.chart,
+        prescription: artifacts.prescription,
+        receipt: artifacts.receipt,
+        reference_id: submission.reference_id,
+      };
+    } catch (err) {
+      console.error("[persist] failed:", err);
+    }
+
     await emitStep(
       runId,
       {
@@ -144,11 +258,7 @@ export async function runAgentPipeline(
         verb: "PERSIST",
         sponsor: "InsForge + Tigris",
         plan: "Store workflow in InsForge; PDFs and receipt in Tigris.",
-        tool_output: {
-          insforge: "pa_submissions, prior_auths, agent_events",
-          tigris: "authmatic-demo",
-          reference_id: submission.reference_id,
-        },
+        tool_output: persistOutput,
       },
       onEvent,
       900
@@ -160,9 +270,11 @@ export async function runAgentPipeline(
     const message = err instanceof Error ? err.message : "Agent run failed";
     updateRun(runId, { status: "error", error: message });
     onEvent({ type: "error", message, run: getRun(runId) });
+  } finally {
+    pipelines.delete(runId);
   }
 }
 
-export function defaultPayload(): PaFormPayload {
-  return getDemoFormPayload();
+export function defaultPayload(caseId?: DemoCaseId): PaFormPayload {
+  return getDemoFormPayload(caseId);
 }
