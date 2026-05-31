@@ -4,13 +4,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Authmatic",
-  description: "An autonomous agent that files prior authorizations in 90 seconds.",
+  description: "Prior authorization automation demo",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
+      <body>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
