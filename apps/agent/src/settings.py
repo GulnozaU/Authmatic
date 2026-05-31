@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     rtrvr_mode: str = "cloud"  # "cloud" | "extension" — PICK ONE
 
     # Opsera
-    opsera_mcp_url: str = "https://mcp.opsera.io/mcp"
+    opsera_mcp_url: str = "https://agent.opsera.ai/mcp"
     opsera_token: str = ""
 
     # Where the user's browser hits this app — used to build the receipt
