@@ -1,5 +1,5 @@
 """Generates the secondary demo PDFs: insurance cards (2 patients) and a
-Humira prescription for Lawrence Thompson. Pairs with gen_demo_pdfs.py
+Humira prescription for Robert James Thompson. Pairs with gen_demo_pdfs.py
 (simple Lisinopril/Metformin) for a richer demo set.
 
 Run: python scripts/gen_mock_pdfs.py
