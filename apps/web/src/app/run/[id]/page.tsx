@@ -59,6 +59,7 @@ export default function RunPage() {
 
   const done = run?.status === "completed";
   const receipt = run?.receipt_url;
+  const tigris = run?.tigris_artifacts;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -82,6 +83,35 @@ export default function RunPage() {
             <p className="mt-1 font-mono text-2xl font-bold">{run?.reference_id}</p>
             <p className="mt-2 text-sm underline opacity-90">View submission receipt →</p>
           </a>
+        )}
+
+        {done && tigris && (tigris.chart || tigris.prescription || tigris.receipt) && (
+          <div className="rounded-xl border border-orange-200 bg-orange-50 p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-widest text-orange-800">
+              Tigris — document storage
+            </p>
+            <p className="mt-1 text-sm text-orange-900">
+              Patient PDFs and receipt stored in bucket{" "}
+              <span className="font-mono font-semibold">{tigris.bucket}</span>
+            </p>
+            <ul className="mt-3 space-y-2 text-xs">
+              {tigris.chart && (
+                <li className="rounded bg-white/80 px-3 py-2 font-mono text-slate-700">
+                  Chart: {tigris.chart.key}
+                </li>
+              )}
+              {tigris.prescription && (
+                <li className="rounded bg-white/80 px-3 py-2 font-mono text-slate-700">
+                  Prescription: {tigris.prescription.key}
+                </li>
+              )}
+              {tigris.receipt && (
+                <li className="rounded bg-white/80 px-3 py-2 font-mono text-slate-700">
+                  Receipt: {tigris.receipt.key}
+                </li>
+              )}
+            </ul>
+          </div>
         )}
 
         {portalPath && (
@@ -111,13 +141,28 @@ export default function RunPage() {
 
         {done && (
           <div className="rounded-xl border bg-white p-4 text-sm text-slate-600">
-            <p className="font-semibold text-hf-navy">Sponsors</p>
+            <p className="font-semibold text-hf-navy">Sponsors (live integrations)</p>
             <ul className="mt-2 space-y-1 text-xs">
-              <li>Rtrvr — browser form submit</li>
-              <li>Opsera — compliance verify</li>
-              <li>Daytona — PDF extract</li>
-              <li>InsForge — workflow DB</li>
-              <li>Tigris — document storage</li>
+              <li>
+                Daytona — PDF extract
+                {steps.find((s) => s.step_no === 1)?.tool_output?._extract ? " ✓" : ""}
+              </li>
+              <li>
+                Opsera — compliance verify
+                {steps.find((s) => s.step_no === 2)?.tool_output?.passed ? " ✓" : ""}
+              </li>
+              <li>
+                Rtrvr —{" "}
+                {(steps.find((s) => s.step_no === 3)?.tool_output?.rtrvr as { used?: boolean })
+                  ?.used
+                  ? "Agent API ✓"
+                  : "portal autofill"}
+              </li>
+              <li>InsForge — workflow DB + prior_auths ✓</li>
+              <li>
+                Tigris — {tigris?.bucket ?? "authmatic-demo"}
+                {tigris?.receipt ? " ✓" : ""}
+              </li>
             </ul>
           </div>
         )}

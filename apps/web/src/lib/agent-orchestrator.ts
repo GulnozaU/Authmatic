@@ -1,6 +1,4 @@
 import { adjudicateReference } from "./adjudication";
-import { getDemoFormPayload } from "./demo-case";
-import type { PaFormPayload } from "./pa-types";
 import {
   appendStep,
   createRun,
@@ -10,6 +8,15 @@ import {
   type AgentStep,
 } from "./agent-runs";
 import { createSubmission } from "./submissions";
+import { extractWithDaytona } from "./sponsors/daytona-extract";
+import { verifyWithOpsera } from "./sponsors/opsera-verify";
+import { submitWithRtrvr } from "./sponsors/rtrvr-submit";
+import {
+  persistRunArtifacts,
+  uploadRunPdfs,
+  type RunTigrisArtifacts,
+} from "./tigris/persist-run";
+import type { PaFormPayload } from "./pa-types";
 
 function baseUrl() {
   if (process.env.WEB_URL?.trim()) return process.env.WEB_URL.trim();
@@ -47,42 +54,75 @@ async function emitStep(
 
 export async function runAgentPipeline(
   runId: string,
-  formPayload: PaFormPayload,
+  _initialPayload: PaFormPayload,
   onEvent: (data: Record<string, unknown>) => void
 ) {
-  createRun(runId, formPayload);
+  createRun(runId, _initialPayload);
 
   try {
+    let tigrisArtifacts: RunTigrisArtifacts | null = null;
+    try {
+      tigrisArtifacts = await uploadRunPdfs(runId);
+    } catch (err) {
+      console.error("[tigris] PDF upload failed:", err);
+    }
+
+    const extracted = await extractWithDaytona();
+    const formPayload = extracted.payload;
+    updateRun(runId, { form_payload: formPayload });
+
+    const extractOutput: Record<string, unknown> = {
+      ...formPayload,
+      _extract: extracted.meta,
+    };
+    if (tigrisArtifacts) {
+      extractOutput.tigris = {
+        bucket: tigrisArtifacts.bucket,
+        chart: tigrisArtifacts.chart,
+        prescription: tigrisArtifacts.prescription,
+      };
+      updateRun(runId, { tigris_artifacts: tigrisArtifacts });
+    }
+
     await emitStep(
       runId,
       {
         step_no: 1,
         verb: "EXTRACT",
         sponsor: "Daytona",
-        plan: "Parse patient chart and prescription PDFs; extract diagnosis, drug, and member ID.",
-        tool_input: { patient: "Sarah Martinez", files: 2 },
-        tool_output: formPayload as unknown as Record<string, unknown>,
+        plan: "Parse patient chart and prescription PDFs in Daytona sandbox; extract payer fields.",
+        tool_input: { patient: formPayload.patient_name, files: 2 },
+        tool_output: extractOutput,
       },
       onEvent,
       1800
     );
 
+    const verify = await verifyWithOpsera(formPayload);
     await emitStep(
       runId,
       {
         step_no: 2,
         verb: "VERIFY",
         sponsor: "Opsera",
-        plan: "Scan outgoing packet for PHI over-disclosure before payer submit.",
-        tool_output: { passed: true, flagged_fields: [] },
+        plan: "Opsera MCP security scan + PHI scope check before payer submit.",
+        tool_output: verify,
       },
       onEvent,
       1400
     );
 
+    if (!verify.passed) {
+      throw new Error(
+        `Opsera compliance failed: ${verify.flagged_fields.join("; ") || verify.notes}`
+      );
+    }
+
     const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
     updateRun(runId, { portal_url: portalPath });
     onEvent({ type: "portal", path: portalPath, run: getRun(runId) });
+
+    const rtrvrPromise = submitWithRtrvr(formPayload);
 
     await emitStep(
       runId,
@@ -90,21 +130,23 @@ export async function runAgentPipeline(
         step_no: 3,
         verb: "SUBMIT",
         sponsor: "Rtrvr",
-        plan: "Open HealthFirst provider portal, fill prior-auth form, and submit.",
+        plan: "Rtrvr Agent API fills HealthFirst portal; iframe shows live autofill.",
         tool_input: { portal_path: portalPath, fields: formPayload },
       },
       onEvent,
       2500
     );
 
+    const rtrvr = await rtrvrPromise;
     const submission = await createSubmission(formPayload);
     const receipt_url = `${baseUrl()}/portal/healthfirst/submission/${submission.reference_id}`;
 
     updateStep(runId, 3, {
       tool_output: {
-        reference_id: submission.reference_id,
+        reference_id: rtrvr.reference_id ?? submission.reference_id,
         status: submission.status,
         receipt_url,
+        rtrvr,
       },
     });
     updateRun(runId, {
@@ -137,6 +179,40 @@ export async function runAgentPipeline(
       },
     });
 
+    const runBeforePersist = getRun(runId)!;
+    const baseArtifacts: RunTigrisArtifacts = runBeforePersist.tigris_artifacts ?? {
+      bucket: process.env.TIGRIS_BUCKET ?? "authmatic-demo",
+    };
+
+    let persistOutput: Record<string, unknown> = {
+      insforge: "pa_submissions (submit step)",
+      tigris_bucket: baseArtifacts.bucket,
+      reference_id: submission.reference_id,
+    };
+
+    try {
+      const { insforge_updated, artifacts } = await persistRunArtifacts(runId, {
+        reference_id: submission.reference_id,
+        receipt_url,
+        form_payload: formPayload,
+        artifacts: baseArtifacts,
+        status: "approved",
+      });
+      updateRun(runId, { tigris_artifacts: artifacts });
+      persistOutput = {
+        insforge: insforge_updated
+          ? "prior_auths + pa_submissions"
+          : "pa_submissions (submit step)",
+        tigris_bucket: artifacts.bucket,
+        chart: artifacts.chart,
+        prescription: artifacts.prescription,
+        receipt: artifacts.receipt,
+        reference_id: submission.reference_id,
+      };
+    } catch (err) {
+      console.error("[persist] failed:", err);
+    }
+
     await emitStep(
       runId,
       {
@@ -144,11 +220,7 @@ export async function runAgentPipeline(
         verb: "PERSIST",
         sponsor: "InsForge + Tigris",
         plan: "Store workflow in InsForge; PDFs and receipt in Tigris.",
-        tool_output: {
-          insforge: "pa_submissions, prior_auths, agent_events",
-          tigris: "authmatic-demo",
-          reference_id: submission.reference_id,
-        },
+        tool_output: persistOutput,
       },
       onEvent,
       900
@@ -164,5 +236,15 @@ export async function runAgentPipeline(
 }
 
 export function defaultPayload(): PaFormPayload {
-  return getDemoFormPayload();
+  return {
+    patient_name: "Sarah Martinez",
+    dob: "03/14/1986",
+    member_id: "HF45821973",
+    diagnosis: "Type 2 Diabetes (E11.9)",
+    medication: "Ozempic",
+    dosage: "0.25mg weekly",
+    provider_name: "Emily Chen, MD",
+    justification:
+      "Poor glycemic control despite first-line therapy. HbA1c 8.9% on Metformin x18mo.",
+  };
 }

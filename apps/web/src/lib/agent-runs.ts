@@ -13,6 +13,13 @@ export interface AgentStep {
   duration_ms?: number;
 }
 
+export interface TigrisArtifacts {
+  bucket: string;
+  chart?: { key: string; url: string };
+  prescription?: { key: string; url: string };
+  receipt?: { key: string; url: string };
+}
+
 export interface AgentRun {
   id: string;
   status: RunStatus;
@@ -20,6 +27,7 @@ export interface AgentRun {
   reference_id?: string;
   receipt_url?: string;
   portal_url?: string;
+  tigris_artifacts?: TigrisArtifacts;
   steps: AgentStep[];
   created_at: string;
   error?: string;

@@ -1,0 +1,127 @@
+import fs from "node:fs";
+import path from "node:path";
+import { isInsForgeConfigured, getInsForgeAdmin } from "../insforge/admin";
+import type { PaFormPayload } from "../pa-types";
+import {
+  isTigrisConfigured,
+  TIGRIS_BUCKET,
+  uploadToTigris,
+} from "./client";
+
+export type TigrisFileRef = { key: string; url: string };
+
+export type RunTigrisArtifacts = {
+  bucket: string;
+  chart?: TigrisFileRef;
+  prescription?: TigrisFileRef;
+  receipt?: TigrisFileRef;
+};
+
+const DEMO_PDFS = [
+  { filename: "patient_chart_sarah_martinez.pdf", field: "chart" as const },
+  { filename: "prescription_ozempic_martinez.pdf", field: "prescription" as const },
+];
+
+function readDemoPdf(filename: string): Buffer | null {
+  const candidates = [
+    path.join(process.cwd(), "public", "demo", filename),
+    path.join(process.cwd(), "demo", "pdfs", filename),
+    path.join(process.cwd(), "..", "..", "demo", "pdfs", filename),
+  ];
+
+  for (const filePath of candidates) {
+    try {
+      if (fs.existsSync(filePath)) return fs.readFileSync(filePath);
+    } catch {
+      /* try next path */
+    }
+  }
+  return null;
+}
+
+/** Upload Sarah demo PDFs to Tigris under runs/{runId}/ */
+export async function uploadRunPdfs(runId: string): Promise<RunTigrisArtifacts | null> {
+  if (!isTigrisConfigured()) return null;
+
+  const artifacts: RunTigrisArtifacts = { bucket: TIGRIS_BUCKET };
+
+  for (const { filename, field } of DEMO_PDFS) {
+    const body = readDemoPdf(filename);
+    if (!body) continue;
+    const key = `runs/${runId}/${filename}`;
+    artifacts[field] = await uploadToTigris(key, body, "application/pdf");
+  }
+
+  if (!artifacts.chart && !artifacts.prescription) return null;
+  return artifacts;
+}
+
+/** Upload JSON receipt artifact after adjudication */
+export async function uploadRunReceipt(
+  runId: string,
+  receipt: Record<string, unknown>
+): Promise<TigrisFileRef | null> {
+  if (!isTigrisConfigured()) return null;
+  const key = `runs/${runId}/receipt.json`;
+  const body = Buffer.from(JSON.stringify(receipt, null, 2), "utf-8");
+  return uploadToTigris(key, body, "application/json");
+}
+
+/** Finish PERSIST: receipt to Tigris + prior_auths row in InsForge */
+export async function persistRunArtifacts(
+  runId: string,
+  params: {
+    reference_id: string;
+    receipt_url: string;
+    form_payload: PaFormPayload;
+    artifacts: RunTigrisArtifacts;
+    status: string;
+  }
+): Promise<{ insforge_updated: boolean; artifacts: RunTigrisArtifacts }> {
+  const artifacts = { ...params.artifacts };
+
+  try {
+    const receipt = await uploadRunReceipt(runId, {
+      run_id: runId,
+      reference_id: params.reference_id,
+      receipt_url: params.receipt_url,
+      status: params.status,
+      patient_name: params.form_payload.patient_name,
+      medication: params.form_payload.medication,
+      stored_at: new Date().toISOString(),
+      tigris_bucket: TIGRIS_BUCKET,
+      chart_key: artifacts.chart?.key,
+      prescription_key: artifacts.prescription?.key,
+    });
+    if (receipt) artifacts.receipt = receipt;
+  } catch (err) {
+    console.error("[tigris] receipt upload failed:", err);
+  }
+
+  let insforge_updated = false;
+  if (isInsForgeConfigured()) {
+    try {
+      const insforge = getInsForgeAdmin();
+      const { error } = await insforge.database.from("prior_auths").upsert([
+        {
+          patient_name: params.form_payload.patient_name,
+          drug_name: params.form_payload.medication,
+          status: params.status,
+          reference_id: params.reference_id,
+          receipt_url: params.receipt_url,
+          chart_storage_key: artifacts.chart?.key ?? null,
+          chart_storage_url: artifacts.chart?.url ?? null,
+          prescription_storage_key: artifacts.prescription?.key ?? null,
+          prescription_storage_url: artifacts.prescription?.url ?? null,
+          updated_at: new Date().toISOString(),
+        },
+      ]);
+      insforge_updated = !error;
+      if (error) console.error("[insforge] prior_auths upsert:", error.message);
+    } catch (err) {
+      console.error("[insforge] persist failed:", err);
+    }
+  }
+
+  return { insforge_updated, artifacts };
+}
