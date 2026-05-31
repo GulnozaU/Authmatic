@@ -1,25 +1,76 @@
-// GET /api/stream/:id — proxies the agent's SSE stream to the browser.
+import { defaultPayload, isPipelineRunning, runAgentPipeline } from "@/lib/agent-orchestrator";
+import { getRun } from "@/lib/agent-runs";
 
-import { NextRequest } from 'next/server';
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const existing = getRun(id);
+  const formPayload = existing?.form_payload ?? defaultPayload();
 
-const AGENT_BASE_URL = process.env.AGENT_BASE_URL ?? 'http://localhost:8000';
+  const stream = new ReadableStream({
+    async start(controller) {
+      const encoder = new TextEncoder();
+      let closed = false;
+      const send = (data: Record<string, unknown>) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          closed = true;
+        }
+      };
 
-export const dynamic = 'force-dynamic';
+      send({ type: "connected", run_id: id });
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const upstream = await fetch(`${AGENT_BASE_URL}/api/stream/${params.id}`, {
-    headers: { accept: 'text/event-stream' },
+      if (!isPipelineRunning(id)) {
+        void runAgentPipeline(id, formPayload, send);
+      }
+
+      let lastStepCount = 0;
+      let lastStatus = "";
+      let portalSent = false;
+
+      while (!closed) {
+        const run = getRun(id);
+        if (run) {
+          if (run.steps.length > lastStepCount) {
+            for (let i = lastStepCount; i < run.steps.length; i++) {
+              send({ type: "step", step: run.steps[i], run });
+            }
+            lastStepCount = run.steps.length;
+          }
+          if (run.portal_url && !portalSent) {
+            portalSent = true;
+            send({ type: "portal", path: run.portal_url, run });
+          }
+          if (run.status !== lastStatus) {
+            lastStatus = run.status;
+            if (run.status === "completed") {
+              send({ type: "done", run });
+              break;
+            }
+            if (run.status === "error") {
+              send({ type: "error", message: run.error ?? "Run failed", run });
+              break;
+            }
+          }
+        }
+        if (!isPipelineRunning(id) && run && run.status !== "running") break;
+        await new Promise((r) => setTimeout(r, 300));
+      }
+
+      closed = true;
+      controller.close();
+    },
   });
 
-  if (!upstream.body) {
-    return new Response('upstream has no body', { status: 502 });
-  }
-
-  return new Response(upstream.body, {
+  return new Response(stream, {
     headers: {
-      'content-type': 'text/event-stream',
-      'cache-control': 'no-cache',
-      connection: 'keep-alive',
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
     },
   });
 }

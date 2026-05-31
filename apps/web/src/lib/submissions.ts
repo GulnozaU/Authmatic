@@ -162,4 +162,27 @@ export async function updateSubmission(
   }
 }
 
+export async function listSubmissions(limit = 20): Promise<PaSubmission[]> {
+  if (isInsForgeConfigured()) {
+    try {
+      const insforge = getInsForgeAdmin();
+      const { data, error } = await insforge.database
+        .from("pa_submissions")
+        .select("*")
+        .order("submitted_at", { ascending: false })
+        .limit(limit);
+
+      if (!error && data?.length) {
+        return data.map((row) => rowToSubmission(row as DbRow));
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  return [...memory.values()]
+    .sort((a, b) => b.submitted_at.localeCompare(a.submitted_at))
+    .slice(0, limit);
+}
+
 export { isInsForgeConfigured };

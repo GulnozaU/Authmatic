@@ -106,18 +106,28 @@ export default function SubmissionStatusPage() {
                   {(
                     [
                       ["Patient", submission.patient_name],
+                      ["Date of birth", submission.dob],
+                      ["Member ID", submission.member_id],
                       ["Medication", `${submission.medication} — ${submission.dosage}`],
                       ["Diagnosis", submission.diagnosis],
                       ["Provider", submission.provider_name],
-                      ["Member ID", submission.member_id],
                     ] as const
                   ).map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-4 border-b border-slate-100 pb-2">
                       <dt className="text-slate-500">{label}</dt>
-                      <dd className="text-right font-medium text-slate-800">{value}</dd>
+                      <dd className="max-w-[60%] text-right font-medium text-slate-800">{value}</dd>
                     </div>
                   ))}
                 </dl>
+
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Clinical justification
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-800">
+                    {submission.justification}
+                  </p>
+                </div>
 
                 {submission.decision_notes && isFinal && (
                   <div

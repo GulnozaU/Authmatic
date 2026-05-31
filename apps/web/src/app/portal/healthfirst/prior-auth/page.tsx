@@ -8,8 +8,9 @@ function FormLoader() {
   const searchParams = useSearchParams();
   const autofill = searchParams.get("autofill") === "1";
   const runId = searchParams.get("run") ?? undefined;
+  const caseId = searchParams.get("case") ?? undefined;
 
-  return <PriorAuthForm autofill={autofill} runId={runId} />;
+  return <PriorAuthForm autofill={autofill} runId={runId} caseId={caseId} />;
 }
 
 function FormFallback() {

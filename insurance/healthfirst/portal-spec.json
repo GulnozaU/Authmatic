@@ -1,0 +1,280 @@
+{
+  "insurer": {
+    "name": "HealthFirst",
+    "plan": "HealthFirst PPO",
+    "portal_title": "HealthFirst Provider Portal"
+  },
+  "base_urls": {
+    "local": "http://localhost:3000",
+    "note": "Use whatever port `npm run dev` prints. Do NOT hardcode 3000 if the app binds to 3001/3002."
+  },
+  "pages": {
+    "prior_auth_form": {
+      "path": "/portal/healthfirst/prior-auth",
+      "full_url_local": "http://localhost:3000/portal/healthfirst/prior-auth",
+      "purpose": "Standard PA request form (Form HF-PA-212 layout) — Rtrvr fills and submits here",
+      "autofill_demo_query": "?autofill=1&run={run_id}",
+      "autofill_note": "Built-in client autofill animates field-by-field for demo. Production: Rtrvr browser automation."
+    },
+    "submission_status": {
+      "path": "/portal/healthfirst/submission/{reference_id}",
+      "full_url_local": "http://localhost:3000/portal/healthfirst/submission/PA-2026-00451",
+      "purpose": "Post-submit status page. Polls GET /api/pa/{ref}. Starts as pending_review.",
+      "reference_id_in_url": true
+    },
+    "success_redirect": {
+      "path": "/portal/healthfirst/success",
+      "query": "?ref={reference_id}",
+      "purpose": "Legacy redirect → submission status page"
+    },
+    "main_app_home": {
+      "path": "/",
+      "purpose": "Upload PDFs + start agent run"
+    },
+    "agent_run_audit": {
+      "path": "/run/{run_id}",
+      "purpose": "SSE agent steps + embedded portal iframe during SUBMIT step"
+    }
+  },
+  "form": {
+    "form_id": "prior-auth-form",
+    "title": "Prescription Drug Prior Authorization or Step Therapy Exception Request Form",
+    "method": "POST",
+    "action": "/api/pa/submit",
+    "submit_button_id": "submit-prior-auth",
+    "submit_button_text": "Submit Prior Authorization",
+    "sections": [
+      {
+        "id": "plan_header",
+        "fields": ["plan_name", "plan_phone", "plan_fax", "urgency_non_urgent", "urgency_urgent"]
+      },
+      {
+        "id": "patient",
+        "title": "1. Patient Information",
+        "fields": [
+          "patient_first_name",
+          "patient_last_name",
+          "patient_mi",
+          "patient_phone",
+          "patient_address",
+          "patient_city",
+          "patient_state",
+          "patient_zip",
+          "patient_dob",
+          "patient_sex_female",
+          "patient_sex_male",
+          "patient_allergies"
+        ]
+      },
+      {
+        "id": "insurance",
+        "title": "2. Insurance Information",
+        "fields": [
+          "primary_insurance_name",
+          "primary_patient_id",
+          "secondary_insurance_name",
+          "secondary_patient_id"
+        ]
+      },
+      {
+        "id": "prescriber",
+        "title": "3. Prescriber Information",
+        "fields": [
+          "prescriber_first_name",
+          "prescriber_last_name",
+          "prescriber_specialty",
+          "prescriber_address",
+          "prescriber_city",
+          "prescriber_state",
+          "prescriber_zip",
+          "prescriber_npi",
+          "prescriber_phone",
+          "prescriber_fax",
+          "prescriber_email"
+        ]
+      },
+      {
+        "id": "medication",
+        "title": "4. Medication / Medical and Dispensing Information",
+        "fields": [
+          "medication_name",
+          "therapy_new",
+          "therapy_renewal",
+          "therapy_step",
+          "medication_dose",
+          "medication_frequency",
+          "medication_quantity",
+          "medication_duration",
+          "medication_route_injection",
+          "admin_location_home",
+          "diagnosis_primary",
+          "clinical_justification"
+        ]
+      }
+    ],
+    "required_fields": [
+      "plan_name",
+      "patient_first_name",
+      "patient_last_name",
+      "patient_dob",
+      "primary_insurance_name",
+      "primary_patient_id",
+      "prescriber_first_name",
+      "prescriber_last_name",
+      "prescriber_npi",
+      "medication_name",
+      "medication_dose",
+      "medication_frequency",
+      "diagnosis_primary",
+      "clinical_justification"
+    ],
+    "demo_values": {
+      "plan_name": "HealthFirst PPO",
+      "patient_first_name": "Sarah",
+      "patient_last_name": "Martinez",
+      "patient_dob": "03/14/1986",
+      "primary_patient_id": "HF45821973",
+      "primary_insurance_name": "HealthFirst PPO",
+      "prescriber_first_name": "Emily",
+      "prescriber_last_name": "Chen",
+      "prescriber_npi": "1234567890",
+      "medication_name": "Ozempic (semaglutide)",
+      "medication_dose": "0.25mg",
+      "medication_frequency": "Once weekly",
+      "diagnosis_primary": "Type 2 Diabetes (E11.9)",
+      "clinical_justification": "Poor glycemic control despite first-line therapy. HbA1c 8.9% on Metformin x18mo."
+    }
+  },
+  "rtrvr_selectors": {
+    "url": "{WEB_URL}/portal/healthfirst/prior-auth",
+    "fields": {
+      "patient_first_name": "#patient_first_name",
+      "patient_last_name": "#patient_last_name",
+      "patient_dob": "#patient_dob",
+      "primary_patient_id": "#primary_patient_id",
+      "primary_insurance_name": "#primary_insurance_name",
+      "prescriber_first_name": "#prescriber_first_name",
+      "prescriber_last_name": "#prescriber_last_name",
+      "prescriber_npi": "#prescriber_npi",
+      "medication_name": "#medication_name",
+      "medication_dose": "#medication_dose",
+      "medication_frequency": "#medication_frequency",
+      "diagnosis_primary": "#diagnosis_primary",
+      "clinical_justification": "#clinical_justification",
+      "therapy_new": "#therapy_new",
+      "medication_route_injection": "#medication_route_injection"
+    },
+    "submit": "#submit-prior-auth",
+    "success_signal": "URL contains /portal/healthfirst/submission/PA-",
+    "extract_reference_id": "Parse reference_id from redirect URL path segment after /submission/"
+  },
+  "rtrvr_task_prompt": "Open {PORTAL_URL}. Fill the Prescription Drug Prior Authorization form: patient (#patient_first_name, #patient_last_name, #patient_dob), insurance (#primary_insurance_name, #primary_patient_id), prescriber (#prescriber_first_name, #prescriber_last_name, #prescriber_npi), medication (#medication_name, #medication_dose, #medication_frequency), diagnosis (#diagnosis_primary), justification (#clinical_justification). Check #therapy_new and #medication_route_injection. Click #submit-prior-auth. Return reference_id from /portal/healthfirst/submission/PA-... URL.",
+  "api": {
+    "submit": {
+      "method": "POST",
+      "path": "/api/pa/submit",
+      "content_types": ["application/x-www-form-urlencoded", "multipart/form-data", "application/json"],
+      "json_body_example_portal_fields": {
+        "patient_first_name": "Sarah",
+        "patient_last_name": "Martinez",
+        "patient_dob": "03/14/1986",
+        "primary_patient_id": "HF45821973",
+        "primary_insurance_name": "HealthFirst PPO",
+        "prescriber_first_name": "Emily",
+        "prescriber_last_name": "Chen",
+        "prescriber_npi": "1234567890",
+        "medication_name": "Ozempic (semaglutide)",
+        "medication_dose": "0.25mg",
+        "medication_frequency": "Once weekly",
+        "diagnosis_primary": "Type 2 Diabetes (E11.9)",
+        "clinical_justification": "Poor glycemic control despite first-line therapy. HbA1c 8.9% on Metformin x18mo."
+      },
+      "json_body_example_legacy": {
+        "patient_name": "Sarah Martinez",
+        "dob": "03/14/1986",
+        "member_id": "HF45821973",
+        "diagnosis": "Type 2 Diabetes (E11.9)",
+        "medication": "Ozempic",
+        "dosage": "0.25mg weekly",
+        "provider_name": "Emily Chen, MD",
+        "justification": "Poor glycemic control despite first-line therapy. HbA1c 8.9% on Metformin x18mo."
+      },
+      "response_json": {
+        "reference_id": "PA-2026-00451",
+        "status": "pending_review",
+        "status_url": "http://localhost:3000/portal/healthfirst/submission/PA-2026-00451",
+        "message": "Prior authorization request received. Status: Pending Review."
+      },
+      "html_behavior": "303 redirect to /portal/healthfirst/submission/{reference_id}"
+    },
+    "get_status": {
+      "method": "GET",
+      "path": "/api/pa/{reference_id}",
+      "response_example": {
+        "reference_id": "PA-2026-00451",
+        "status": "pending_review",
+        "patient_name": "Sarah Martinez",
+        "submitted_at": "2026-05-31T12:00:00.000Z"
+      }
+    },
+    "adjudicate": {
+      "method": "POST",
+      "path": "/api/pa/{reference_id}/adjudicate",
+      "body_optional": { "review_delay_ms": 8000 },
+      "note": "Agent calls AFTER form submit. Simulates payer medical review. Not auto-called on submit.",
+      "status_flow": ["pending_review", "under_review", "approved|denied"]
+    },
+    "start_run": {
+      "method": "POST",
+      "path": "/api/run",
+      "body": { "demo": true },
+      "response": { "run_id": "uuid", "demo": true }
+    },
+    "stream_run": {
+      "method": "GET",
+      "path": "/api/stream/{run_id}",
+      "type": "text/event-stream",
+      "events": ["connected", "step", "portal", "done", "error"],
+      "portal_event_example": {
+        "type": "portal",
+        "path": "/portal/healthfirst/prior-auth?autofill=1&run={run_id}"
+      }
+    },
+    "get_run": {
+      "method": "GET",
+      "path": "/api/run/{run_id}",
+      "purpose": "Full audit payload for /run/[id]"
+    }
+  },
+  "workflow": {
+    "steps": [
+      "POST /api/run → run_id",
+      "GET /api/stream/{run_id} → SSE steps (EXTRACT, VERIFY, SUBMIT, ADJUDICATE, PERSIST)",
+      "On portal event: open {WEB_URL}{path} in browser (Rtrvr) or show iframe autofill",
+      "Rtrvr fills form + clicks submit → pending_review",
+      "POST /api/pa/{reference_id}/adjudicate → under_review → approved|denied",
+      "Poll GET /api/pa/{reference_id} or load submission status page for receipt"
+    ],
+    "approval_rules": {
+      "approve_when": "All fields present, member_id matches HF########, medication on formulary (ozempic/semaglutide), step therapy keywords in justification",
+      "deny_when": "Missing fields, bad member_id, insufficient step therapy documentation, non-formulary drug"
+    }
+  },
+  "demo_assets": {
+    "case_fixture": "demo/sarah-martinez.json",
+    "chart_pdf": "demo/pdfs/patient_chart_sarah_martinez.pdf",
+    "prescription_pdf": "demo/pdfs/prescription_ozempic_martinez.pdf",
+    "public_chart": "/demo/patient_chart_sarah_martinez.pdf",
+    "public_prescription": "/demo/prescription_ozempic_martinez.pdf"
+  },
+  "source_files": {
+    "form_component": "apps/web/src/components/portal/PriorAuthForm.tsx",
+    "form_data": "apps/web/src/lib/portal-form-data.ts",
+    "form_page": "apps/web/src/app/portal/healthfirst/prior-auth/page.tsx",
+    "status_page": "apps/web/src/app/portal/healthfirst/submission/[ref]/page.tsx",
+    "submit_api": "apps/web/src/app/api/pa/submit/route.ts",
+    "adjudication_logic": "apps/web/src/lib/adjudication.ts",
+    "types": "apps/web/src/lib/pa-types.ts",
+    "demo_payload": "apps/web/src/lib/demo-case.ts"
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "demo_id": "sarah-ozempic-healthfirst",
+  "patient": {
+    "full_name": "Sarah Martinez",
+    "dob": "1986-03-14",
+    "member_id": "HF45821973",
+    "insurance_plan": "HealthFirst PPO",
+    "diagnosis": "Type 2 Diabetes",
+    "diagnosis_icd10": "E11.9",
+    "recent_a1c": "8.9%",
+    "previous_treatment": "Metformin",
+    "prior_therapy_note": "Not responding adequately after 18 months"
+  },
+  "prescriber": {
+    "name": "Emily Chen, MD",
+    "npi": "1234567890",
+    "clinic": "Bay Area Primary Care",
+    "clinic_address": "1840 Telegraph Ave, Oakland, CA 94612",
+    "phone": "(510) 555-0142"
+  },
+  "medication": {
+    "name": "Ozempic",
+    "generic": "semaglutide",
+    "dosage": "0.25mg weekly",
+    "refills": 5,
+    "justification": "Poor glycemic control despite first-line therapy"
+  },
+  "insurer": {
+    "name": "HealthFirst",
+    "portal_name": "HealthFirst Provider Portal",
+    "portal_path": "/portal/healthfirst/prior-auth",
+    "submission_path": "/portal/healthfirst/submission/{reference_id}",
+    "reference_id_prefix": "PA-2026-"
+  },
+  "workflow": {
+    "on_submit_status": "pending_review",
+    "statuses": ["pending_review", "under_review", "approved", "denied"],
+    "note": "Submit does NOT auto-approve. Agent calls POST /api/pa/{ref}/adjudicate to run payer medical review.",
+    "adjudicate_api": "/api/pa/{reference_id}/adjudicate",
+    "status_api": "/api/pa/{reference_id}",
+    "demo_review_delay_ms": 8000
+  },
+  "form_fields": [
+    "patient_name",
+    "dob",
+    "member_id",
+    "diagnosis",
+    "medication",
+    "dosage",
+    "provider_name",
+    "justification"
+  ],
+  "assets": {
+    "patient_chart": "demo/pdfs/patient_chart_sarah_martinez.pdf",
+    "prescription": "demo/pdfs/prescription_ozempic_martinez.pdf",
+    "storage": "tigris",
+    "storage_bucket": "authmatic-demo"
+  },
+  "insforge": {
+    "project_url": "https://fj245m46.us-east.insforge.app",
+    "tables": ["pa_submissions", "prior_auths", "agent_events", "demo_cases"]
+  },
+  "tigris": {
+    "endpoint": "https://t3.storage.dev",
+    "bucket": "authmatic-demo"
+  }
+}
