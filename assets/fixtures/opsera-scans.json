@@ -1,0 +1,26 @@
+{
+  "pass": {
+    "passed": true,
+    "flagged_fields": [],
+    "raw": {
+      "risk_level": "low",
+      "scanned_at": "2026-05-31T12:00:00Z",
+      "tool": "Opsera scan_pii",
+      "fields_checked": [
+        "full_name", "dob", "member_id",
+        "drug_name", "drug_ndc", "dose", "diagnosis_code", "rationale"
+      ],
+      "note": "All fields match the form's documented schema; no PHI over-disclosure detected."
+    }
+  },
+  "fail_ssn": {
+    "passed": false,
+    "flagged_fields": ["ssn"],
+    "raw": {
+      "risk_level": "high",
+      "scanned_at": "2026-05-31T12:00:00Z",
+      "tool": "Opsera scan_pii",
+      "note": "Outgoing packet contains SSN, which is not on the UHC PA form's required-fields list. Block before submit."
+    }
+  }
+}
