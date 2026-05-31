@@ -126,7 +126,8 @@ https://github.com/r2st/Authmatic
 ## Team
 
 ```
-<names, roles (Architect / Builder / Designer / Storyteller), contact emails>
+Gulnoza Usmonova — <role · email TBD>
+Subhendu Das — <role · email TBD>
 ```
 
 ---
