@@ -113,20 +113,26 @@ export default function DashboardPage() {
             {(data?.submissions ?? []).slice(0, 6).map((s) => (
               <li key={s.reference_id} className="flex items-center justify-between text-sm">
                 <div>
-                  <p className="font-medium text-[#0f1419]">{s.reference_id}</p>
+                  <Link
+                    href={`/portal/healthfirst/submission/${s.reference_id}`}
+                    className="font-medium text-[#0f1419] hover:text-[#b8410e] hover:underline"
+                  >
+                    {s.reference_id}
+                  </Link>
                   <p className="text-xs text-[#5b6470]">
                     {s.patient_name} · {s.medication}
                   </p>
                 </div>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                <Link
+                  href={`/portal/healthfirst/submission/${s.reference_id}`}
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium hover:opacity-80 ${
                     s.status === "approved"
                       ? "bg-[#e6f1ea] text-[#1f6b3e]"
                       : "bg-amber-50 text-amber-800"
                   }`}
                 >
-                  {s.status.replace("_", " ")}
-                </span>
+                  {s.status.replace("_", " ")} →
+                </Link>
               </li>
             ))}
             {!data?.submissions.length && (

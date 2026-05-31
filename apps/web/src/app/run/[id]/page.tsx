@@ -59,7 +59,9 @@ export default function RunPage() {
   }, [runId]);
 
   const done = run?.status === "completed";
-  const receipt = run?.receipt_url;
+  const receipt =
+    run?.receipt_url ??
+    (run?.reference_id ? `/portal/healthfirst/submission/${run.reference_id}` : null);
   const tigris = run?.tigris_artifacts;
 
   return (

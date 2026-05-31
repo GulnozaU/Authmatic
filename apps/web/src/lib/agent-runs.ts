@@ -23,6 +23,7 @@ export interface TigrisArtifacts {
 export interface AgentRun {
   id: string;
   status: RunStatus;
+  case_id?: string;
   form_payload: PaFormPayload;
   reference_id?: string;
   receipt_url?: string;
@@ -40,10 +41,15 @@ function store(): Map<string, AgentRun> {
   return globalThis.__agentRuns;
 }
 
-export function createRun(id: string, form_payload: PaFormPayload): AgentRun {
+export function createRun(
+  id: string,
+  form_payload: PaFormPayload,
+  case_id?: string
+): AgentRun {
   const run: AgentRun = {
     id,
     status: "running",
+    case_id,
     form_payload,
     steps: [],
     created_at: new Date().toISOString(),

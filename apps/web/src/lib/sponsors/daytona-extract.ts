@@ -1,4 +1,4 @@
-import { getDemoFormPayload } from "../demo-case";
+import { getDemoFormPayload } from "../demo-cases";
 import { isDemoFixtureMode } from "../demo-mode";
 import { readDemoPdfBuffers } from "../demo-pdf-paths";
 import type { PaFormPayload } from "../pa-types";
@@ -120,8 +120,8 @@ print(json.dumps({
 }
 
 /** Real PDF extraction — Daytona sandbox when keyed, pdf-parse always */
-export async function extractWithDaytona(): Promise<ExtractResult> {
-  const fixture = getDemoFormPayload();
+export async function extractWithDaytona(caseId?: string): Promise<ExtractResult> {
+  const fixture = getDemoFormPayload(caseId);
 
   if (isDemoFixtureMode()) {
     return {

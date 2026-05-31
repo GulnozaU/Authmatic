@@ -16,6 +16,7 @@ import {
   uploadRunPdfs,
   type RunTigrisArtifacts,
 } from "./tigris/persist-run";
+import { getDemoFormPayload, submissionPath, type DemoCaseId } from "./demo-cases";
 import type { PaFormPayload } from "./pa-types";
 
 const pipelines = new Set<string>();
@@ -61,14 +62,18 @@ export function isPipelineRunning(id: string): boolean {
 export async function runAgentPipeline(
   runId: string,
   _initialPayload: PaFormPayload,
-  onEvent: (data: Record<string, unknown>) => void
+  onEvent: (data: Record<string, unknown>) => void,
+  options?: { caseId?: DemoCaseId }
 ) {
   if (pipelines.has(runId)) return;
   pipelines.add(runId);
 
+  const caseId = options?.caseId;
   const existing = getRun(runId);
   if (!existing) {
-    createRun(runId, _initialPayload);
+    createRun(runId, _initialPayload, caseId);
+  } else if (caseId && !existing.case_id) {
+    updateRun(runId, { case_id: caseId });
   }
 
   onEvent({ type: "progress", message: "Agent starting…", run: getRun(runId) });
@@ -77,7 +82,7 @@ export async function runAgentPipeline(
     let tigrisArtifacts: RunTigrisArtifacts | null = null;
     const tigrisPromise = uploadRunPdfs(runId).catch(() => null);
 
-    const extracted = await extractWithDaytona();
+    const extracted = await extractWithDaytona(caseId);
     const formPayload = extracted.payload;
     updateRun(runId, { form_payload: formPayload });
 
@@ -133,7 +138,7 @@ export async function runAgentPipeline(
       );
     }
 
-    const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
+    const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}${caseId ? `&case=${caseId}` : ""}`;
     updateRun(runId, { portal_url: portalPath });
     onEvent({ type: "portal", path: portalPath, run: getRun(runId) });
 
@@ -171,7 +176,8 @@ export async function runAgentPipeline(
       ),
     ]);
     const submission = await createSubmission(formPayload);
-    const receipt_url = `${baseUrl()}/portal/healthfirst/submission/${submission.reference_id}`;
+    const receipt_url = submissionPath(submission.reference_id);
+    const receipt_absolute = `${baseUrl()}${receipt_url}`;
 
     updateStep(runId, 3, {
       tool_output: {
@@ -225,7 +231,7 @@ export async function runAgentPipeline(
     try {
       const { insforge_updated, artifacts } = await persistRunArtifacts(runId, {
         reference_id: submission.reference_id,
-        receipt_url,
+        receipt_url: receipt_absolute,
         form_payload: formPayload,
         artifacts: baseArtifacts,
         status: "approved",
@@ -269,16 +275,6 @@ export async function runAgentPipeline(
   }
 }
 
-export function defaultPayload(): PaFormPayload {
-  return {
-    patient_name: "Sarah Martinez",
-    dob: "03/14/1986",
-    member_id: "HF45821973",
-    diagnosis: "Type 2 Diabetes (E11.9)",
-    medication: "Ozempic",
-    dosage: "0.25mg weekly",
-    provider_name: "Emily Chen, MD",
-    justification:
-      "Poor glycemic control despite first-line therapy. HbA1c 8.9% on Metformin x18mo.",
-  };
+export function defaultPayload(caseId?: DemoCaseId): PaFormPayload {
+  return getDemoFormPayload(caseId);
 }

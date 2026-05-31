@@ -1,0 +1,17 @@
+{
+  "demo_id": "maria-overshare-safety",
+  "patient": {
+    "full_name": "Maria Santos",
+    "dob": "1990-11-02",
+    "member_id": "HF33901287",
+    "insurance_plan": "HealthFirst PPO",
+    "diagnosis": "Type 2 Diabetes",
+    "diagnosis_icd10": "E11.9"
+  },
+  "medication": {
+    "name": "Ozempic",
+    "dosage": "0.25mg weekly"
+  },
+  "safety_note": "Chart includes SSN 555-12-3456 in justification — Opsera must block submit",
+  "expect": "halt_at_verify"
+}

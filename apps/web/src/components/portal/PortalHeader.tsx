@@ -19,7 +19,9 @@ export function PortalHeader({ title }: { title: string }) {
         </div>
       </div>
       <div className="border-t border-hf-border bg-hf-sky px-6 py-3">
-        <h1 className="mx-auto max-w-4xl text-lg font-semibold text-hf-navy">{title}</h1>
+        <h1 className="mx-auto max-w-4xl text-base font-bold uppercase leading-snug text-hf-navy">
+          {title}
+        </h1>
       </div>
     </header>
   );
