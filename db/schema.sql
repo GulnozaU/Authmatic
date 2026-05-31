@@ -2,7 +2,17 @@
 -- Apply with: psql "$INSFORGE_DB_URL" -f db/schema.sql
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "vector";
+
+-- pgvector is optional. Available on the local docker (pgvector/pgvector
+-- image) but not on Insforge cloud. Skip silently when it's missing —
+-- pa_embeddings (below) is then also skipped, and the SQL-keyed RAG path
+-- in apps/agent/src/persist.py runs without it.
+DO $$
+BEGIN
+  CREATE EXTENSION IF NOT EXISTS "vector";
+EXCEPTION WHEN OTHERS THEN
+  RAISE NOTICE 'pgvector not available, skipping (% — %)', SQLSTATE, SQLERRM;
+END $$;
 
 -- ─── patients ────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS patients (
@@ -54,18 +64,26 @@ CREATE TABLE IF NOT EXISTS agent_events (
 CREATE INDEX IF NOT EXISTS agent_events_pa_idx ON agent_events(pa_id, step_no);
 
 -- ─── pa_embeddings ───────────────────────────────────────────────────
--- pgvector RAG over past approved rationales.
-CREATE TABLE IF NOT EXISTS pa_embeddings (
-  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  pa_id        UUID NOT NULL REFERENCES prior_auths(id) ON DELETE CASCADE,
-  rationale    TEXT NOT NULL,
-  embedding    VECTOR(1536) NOT NULL,
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS pa_embeddings_vec_idx
-  ON pa_embeddings USING ivfflat (embedding vector_cosine_ops)
-  WITH (lists = 100);
+-- pgvector RAG over past approved rationales. Conditional on the vector
+-- extension being available. The SQL-keyed RAG in persist.py works
+-- without this table; the embeddings path is for the live-mode upgrade.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector') THEN
+    CREATE TABLE IF NOT EXISTS pa_embeddings (
+      id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      pa_id        UUID NOT NULL REFERENCES prior_auths(id) ON DELETE CASCADE,
+      rationale    TEXT NOT NULL,
+      embedding    VECTOR(1536) NOT NULL,
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS pa_embeddings_vec_idx
+      ON pa_embeddings USING ivfflat (embedding vector_cosine_ops)
+      WITH (lists = 100);
+  ELSE
+    RAISE NOTICE 'skipping pa_embeddings table (vector extension not installed)';
+  END IF;
+END $$;
 
 -- ─── compliance_scans ────────────────────────────────────────────────
 -- Opsera VERIFY results — one per PA.

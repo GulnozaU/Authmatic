@@ -3,35 +3,58 @@
 > Applied Intelligence Hackathon · 31 May 2026 · Frontier Tower SF
 >
 > An autonomous agent that files real prior authorizations on real payer
-> portals, with a HIPAA-grade audit trail. Built around four sponsors:
-> **Opsera · Daytona · Insforge · Rtrvr.ai**.
+> portals in 90 seconds, with a HIPAA-grade audit trail. Built around
+> four sponsors: **Opsera · Daytona · Insforge · Rtrvr.ai**.
+>
+> **Live demo:** https://z739c3mi.insforge.site/
 
 ## What's in this repo
 
 ```
 .
-├── README.md              ← you are here (setup + run)
-├── SUBMISSION.md          ← the text to paste into the submission form
-├── .env.example           ← required secrets (copy to .env)
-├── Makefile               ← one-liners: `make smoke`, `make dev`, `make seed`
-├── package.json           ← workspace root (pnpm)
+├── README.md                  ← you are here (setup + run)
+├── SUBMISSION.md              ← the text to paste into the submission form
+├── LICENSE                    ← MIT
+├── AGENTS.md                  ← coordination rules for multi-agent work
+├── .env.example               ← required secrets (copy to .env)
+├── Makefile                   ← one-liners: `make smoke`, `make dev`, `make seed`
+├── docker-compose.local.yml   ← local Postgres + pgvector fallback
+├── package.json               ← workspace root (pnpm)
 ├── apps/
-│   ├── web/               ← Next.js 14 UI (dropzone + audit page)
-│   └── agent/             ← FastAPI agent service (the 4-verb ReAct loop)
+│   ├── web/                   ← Next.js 14 UI
+│   │   └── src/app/
+│   │       ├── page.tsx       ← dropzone + 3 one-click scenario tiles
+│   │       ├── run/[id]/      ← audit page (every step cited)
+│   │       ├── receipt/[id]/  ← payer-portal-style confirmation page
+│   │       ├── portal/healthfirst/  ← mock HealthFirst portal Rtrvr drives
+│   │       └── api/           ← run, sample, stream, pa, portal handlers
+│   └── agent/                 ← FastAPI agent service (4-verb ReAct loop)
+│       ├── main.py            ← endpoints + SSE
+│       ├── src/loop.py        ← the loop itself
+│       ├── src/tools/         ← READ-WEB, EXECUTE, VERIFY, PERSIST
+│       └── render.yaml        ← Render deploy manifest
 ├── db/
-│   └── schema.sql         ← Insforge Postgres + pgvector schema
+│   └── schema.sql             ← Postgres + pgvector schema
 ├── assets/
-│   └── fixtures/          ← Cached sponsor responses for the demo
+│   ├── demo/                  ← richer letterhead PDFs + charts
+│   └── fixtures/              ← canonical demo PDFs + sponsor fixtures
+├── mock/                      ← HealthFirst portal fixture state (JSON)
 ├── docs/
-│   └── architecture.md    ← Full system architecture
+│   ├── architecture.md        ← Full system architecture
+│   ├── healthfirst-portal-handoff.md
+│   ├── team-split-report.md
+│   └── insforge.md / tigris.md
 ├── scripts/
-│   ├── smoke.sh           ← Hello-world each sponsor (run at preflight)
-│   ├── seed.sh            ← Wrapper for `seed.py`
-│   ├── seed.py            ← Populate demo patients + prior approvals
-│   └── reset.sh           ← Wipe + re-seed for a clean demo run
+│   ├── smoke.sh               ← Hello-world each sponsor (preflight)
+│   ├── seed.py / seed.sh      ← Populate demo patients + prior approvals
+│   ├── reset.sh               ← Wipe + re-seed for a clean demo run
+│   ├── gen_demo_pdfs.py       ← Generate Lisinopril/Metformin PDFs
+│   ├── gen_mock_pdfs.py       ← Generate letterhead PDFs + insurance cards
+│   └── generate_handoff_pdf.py
 └── demo/
-    ├── pitch-script.md    ← 3-minute pitch
-    └── recordings/        ← Fallback screencast goes here
+    ├── pitch-script.md        ← 3-minute pitch
+    ├── presentation.html      ← Slide deck (browser-rendered)
+    └── recordings/            ← Fallback screencast goes here
 ```
 
 ## Setup (one-time, ~15 minutes)
@@ -78,15 +101,27 @@ make smoke
 ```bash
 make seed
 make dev                         # runs web (3000) + agent (8000) concurrently
-open http://localhost:3000
+open http://localhost:3000       # then click any of the three scenario tiles
 ```
 
 ## Demo flow
 
-1. Drag `assets/fixtures/rx-lisinopril.pdf` onto the dropzone.
-2. Watch four step cards appear — one per sponsor verb.
-3. Click through to `/run/:id` — the audit page.
-4. Click the receipt URL → opens the (sandbox) payer confirmation page.
+The homepage ships **three one-click scenarios** plus a free-form
+dropzone. Each scenario lands a distinct beat for the "Agents That Act"
+rubric:
+
+| Tile | What it proves | Sponsor highlight |
+|---|---|---|
+| **Happy path** — Lisinopril 10mg → UnitedHealthcare | The agent acts end-to-end: drops, parses, verifies, files, returns a receipt URL. | Daytona sandboxes the parse; Rtrvr files the form. |
+| **Different payer** — Ozempic for Sarah Martinez → HealthFirst | Routing is driven by member ID, not hardcoded. The same loop adapts to a different portal (`/portal/healthfirst/`). | Rtrvr drives the mock HealthFirst portal in `apps/web/src/app/portal/healthfirst/`. |
+| **Safety net** — Same Rx with an extra SSN | The agent *halts before submission* when Opsera flags PHI over-disclosure. No receipt is issued. The agent demonstrates not-acting when acting would be wrong. | Opsera MCP catches the SSN field; Insforge persists the halt reason for audit. |
+
+Free-form: drag any prescription PDF onto the dropzone for a custom run.
+
+After every run the page auto-redirects to **`/run/:id`** — the audit
+chain. Each step is cited back to the source PDF and the sponsor tool
+that produced it. The receipt URL on the happy-path / different-payer
+tiles opens a payer-portal-style confirmation at **`/receipt/:id`**.
 
 Full walkthrough in [demo/pitch-script.md](demo/pitch-script.md).
 
@@ -118,7 +153,7 @@ Full detail: [`docs/architecture.md`](docs/architecture.md).
 | **Rtrvr.ai** | READ-WEB + ACTION (drives payer portal) | `apps/agent/src/tools/read_web.py` |
 | **Daytona** | EXECUTE (sandboxed PDF parsing + normalization) | `apps/agent/src/tools/execute.py` |
 | **Opsera** | VERIFY (PHI exposure scan via MCP) | `apps/agent/src/tools/verify.py` |
-| **Insforge** | PERSIST (Postgres + pgvector + edge fn + model gateway) | `apps/agent/src/{insforge_client,tools/persist}.py` |
+| **Insforge** | PERSIST (Postgres + pgvector + edge fn + model gateway) + planner LLM | `apps/agent/src/{insforge_client,persist}.py` |
 
 Stretch (if time): NEAR AI (TEE attestation), Tigris (chart storage),
 Brain2 (voice trigger).

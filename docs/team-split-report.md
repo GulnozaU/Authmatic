@@ -307,7 +307,7 @@ step_no, verb, plan, tool_input, tool_output, duration_ms
 
 3. **Tigris** — upload chart PDF, prescription PDF, receipt screenshot/JSON; save keys + URLs in `prior_auths`
 
-Use same InsForge project: `https://fj245m46.us-east.insforge.app` (keys in `.env.local`)
+Use same InsForge project: `https://z739c3mi.us-east.insforge.app` (keys in `.env.local`)
 
 Emit SSE step 5 with storage paths.
 

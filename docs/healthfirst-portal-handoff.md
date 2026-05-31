@@ -258,7 +258,7 @@ RTRVR_MODE=cloud
 DAYTONA_API_KEY=
 OPSERA_API_TOKEN=
 
-INSFORGE_PROJECT_URL=https://fj245m46.us-east.insforge.app
+INSFORGE_PROJECT_URL=https://z739c3mi.us-east.insforge.app
 INSFORGE_API_KEY=
 
 TIGRIS_ACCESS_KEY_ID=

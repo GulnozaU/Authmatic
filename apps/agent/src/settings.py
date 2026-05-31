@@ -9,11 +9,22 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # Insforge
+    # ── Insforge backend ──
+    # api_key here is reserved for direct InsForge backend calls (DB/storage/
+    # edge-fn admin) — NOT the planner LLM. The planner uses OpenRouter
+    # directly via the dedicated key below. Provisioned via
+    # `npx @insforge/cli current` / `link`. Leave blank in fixture mode.
     insforge_api_key: str = ""
     insforge_project_url: str = ""
     insforge_db_url: str = "postgres://postgres:postgres@localhost:5432/postgres"
-    insforge_model: str = "llama-3.1-70b-instruct"
+
+    # ── Planner LLM (OpenRouter via InsForge AI gateway) ──
+    # Provisioned by `npx @insforge/cli ai setup --env-file .env`. Server-only.
+    # Model name uses OpenRouter's slug convention, e.g.
+    # "meta-llama/llama-3.1-70b-instruct".
+    openrouter_api_key: str = ""
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+    insforge_model: str = "meta-llama/llama-3.1-70b-instruct"
 
     # Daytona
     daytona_api_key: str = ""

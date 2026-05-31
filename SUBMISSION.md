@@ -122,16 +122,21 @@ https://github.com/r2st/Authmatic
 ```
 https://z739c3mi.insforge.site/
 
-Three one-click scenarios, each proving a distinct capability:
+Operator view (homepage). Three one-click scenarios:
 - Happy path  — Lisinopril 10mg → UnitedHealthcare. Drops, parses, verifies, files, returns receipt.
 - Diff payer  — Ozempic for Sarah Martinez → HealthFirst. Proves routing by member ID, not hardcoded payer.
 - Safety net  — Same Rx with an extra SSN. Opsera flags patient_ssn; agent halts before submission, no receipt issued.
+
+System view — direct: https://z739c3mi.insforge.site/portal/healthfirst/prior-auth?autofill=1
+Watch the agent type into the HealthFirst provider portal field-by-field,
+then submit and land on a Pending Review status page with a real PA reference number.
 ```
 
 ## Team
 
 ```
 Gulnoza Usmonova — Developer · gulnozausmon0708@gmail.com
+Vidhi Kothari — Developer · vidhi.kothari@apprend.tech
 Subhendu Das — Developer · sumaninster7@gmail.com
 ```
 

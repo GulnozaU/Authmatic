@@ -1,8 +1,11 @@
-"""Insforge model gateway client.
+"""Planner LLM client.
 
-Insforge exposes an OpenAI-compatible /v1/chat/completions endpoint. We
-use it as the planner LLM. The planner is forced into strict JSON output
-so we can parse the next verb without prose drift.
+Calls OpenRouter directly (the OpenAI-compatible upstream behind InsForge's
+AI gateway). Authenticated with `OPENROUTER_API_KEY`, provisioned via
+`npx @insforge/cli ai setup --env-file .env`. Server-only.
+
+The planner is forced into strict JSON output so we can parse the next
+verb without prose drift.
 """
 
 from __future__ import annotations
@@ -33,14 +36,20 @@ async def plan_next_step(history: list[dict]) -> dict:
     if s.demo_fixture_mode:
         return _fixture_plan(history)
 
-    url = f"{s.insforge_project_url.rstrip('/')}/v1/chat/completions"
+    url = f"{s.openrouter_base_url.rstrip('/')}/chat/completions"
     payload = {
         "model": s.insforge_model,
         "messages": history,
         "response_format": {"type": "json_object"},
         "temperature": 0.1,
     }
-    headers = {"Authorization": f"Bearer {s.insforge_api_key}"}
+    headers = {
+        "Authorization": f"Bearer {s.openrouter_api_key}",
+        # OpenRouter requires HTTP-Referer + X-Title for attribution; the
+        # project URL doubles as a stable identifier here.
+        "HTTP-Referer": s.insforge_project_url or "https://authmatic.local",
+        "X-Title": "Authmatic Planner",
+    }
 
     for attempt in (1, 2):
         async with httpx.AsyncClient(timeout=60) as client:
