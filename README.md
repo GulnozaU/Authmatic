@@ -68,9 +68,10 @@ authmatic/
 
 | Sponsor | Does what in demo |
 |---------|-------------------|
-| **Rtrvr** | Browser automation — fills + submits mock portal (**main demo**) |
-| **InsForge** | All data — Postgres + Storage (submissions, PDFs, agent logs) |
-| **Render** | Public deploy — judges get a live URL |
+| **Rtrvr** | Browser automation — fills + submits mock portal |
+| **Tigris** | PDF + receipt file storage |
+| **InsForge** | Postgres workflow — submissions, runs, agent_events |
+| **Render** | Public deploy — live demo URL |
 
 ---
 
@@ -97,7 +98,7 @@ cp .env.example .env   # fill sponsor keys
 Demo PDFs: `assets/demo/patient_chart_sarah_martinez.pdf`, `assets/demo/prescription_ozempic_martinez.pdf`
 
 Field reference: `mock/healthfirst-case.json`  
-InsForge setup: [docs/insforge.md](docs/insforge.md)
+InsForge setup: [docs/insforge.md](docs/insforge.md) · Tigris: [docs/tigris.md](docs/tigris.md)
 
 **Team handoff PDF:** [docs/authmatic-team-handoff.pdf](docs/authmatic-team-handoff.pdf) — what we have, what backend needs, sponsor env vars.
 

@@ -38,7 +38,8 @@
 |-----------|-------|------|---------|
 | Web UI + portal | You | Next.js + Tailwind | Dropzone, audit, **mock HealthFirst form** |
 | Agent service | Teammate | FastAPI | Extract, orchestrate Rtrvr, persist |
-| Object storage + DB | Both | InsForge | PDFs, submissions, runs, agent_events |
+| Object storage | Both | **Tigris** | PDFs, receipts (S3-compatible) |
+| Workflow DB | Both | **InsForge** | Submissions, runs, agent_events |
 | Browser agent | Teammate | Rtrvr | Fill + submit mock portal |
 | Hosting | Either | Render | Public demo URL |
 

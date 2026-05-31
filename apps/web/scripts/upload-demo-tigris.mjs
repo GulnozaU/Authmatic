@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client, CreateBucketCommand, HeadBucketCommand } from "@aws-sdk/client-s3";
 import { createAdminClient } from "@insforge/sdk";
 
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -32,6 +32,15 @@ function client() {
 
 function url(key) {
   return `${process.env.TIGRIS_ENDPOINT.replace(/\/$/, "")}/${BUCKET}/${key}`;
+}
+
+async function ensureBucket() {
+  try {
+    await client().send(new HeadBucketCommand({ Bucket: BUCKET }));
+  } catch {
+    console.log(`Creating bucket "${BUCKET}"...`);
+    await client().send(new CreateBucketCommand({ Bucket: BUCKET }));
+  }
 }
 
 async function upload(key, filePath) {
@@ -60,6 +69,7 @@ async function main() {
   }
 
   console.log("Uploading PDFs to Tigris...");
+  await ensureBucket();
   const chart = await upload(
     "demo/patient_chart_sarah_martinez.pdf",
     path.join(repoRoot, "assets/demo/patient_chart_sarah_martinez.pdf")

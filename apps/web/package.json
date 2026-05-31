@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "seed:insforge": "node scripts/seed-insforge.mjs"
+    "seed:insforge": "node scripts/seed-insforge.mjs",
+    "upload:tigris": "node scripts/upload-demo-tigris.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1057.0",
