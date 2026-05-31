@@ -126,8 +126,8 @@ https://github.com/r2st/Authmatic
 ## Team
 
 ```
-Gulnoza Usmonova — <role · email TBD>
-Subhendu Das — <role · email TBD>
+Gulnoza Usmonova — Developer · gulnozausmon0708@gmail.com
+Subhendu Das — Developer · sumaninster7@gmail.com
 ```
 
 ---
