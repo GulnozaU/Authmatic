@@ -7,7 +7,7 @@ import { createAdminClient } from "@insforge/sdk";
 const webRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(webRoot, "../..");
 const projectFile = path.join(repoRoot, ".insforge/project.json");
-const caseFile = path.join(repoRoot, "mock/healthfirst-case.json");
+const caseFile = path.join(repoRoot, "demo/sarah-martinez.json");
 const BUCKET = "authmatic-demo";
 
 function loadConfig() {
@@ -31,12 +31,12 @@ async function main() {
   console.log("Uploading demo PDFs...");
   const chart = await uploadPdf(
     insforge,
-    path.join(repoRoot, "assets/demo/patient_chart_sarah_martinez.pdf"),
+    path.join(repoRoot, "demo/pdfs/patient_chart_sarah_martinez.pdf"),
     "demo/patient_chart_sarah_martinez.pdf"
   );
   const rx = await uploadPdf(
     insforge,
-    path.join(repoRoot, "assets/demo/prescription_ozempic_martinez.pdf"),
+    path.join(repoRoot, "demo/pdfs/prescription_ozempic_martinez.pdf"),
     "demo/prescription_ozempic_martinez.pdf"
   );
 

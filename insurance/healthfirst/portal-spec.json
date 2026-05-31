@@ -204,9 +204,9 @@
     }
   },
   "demo_assets": {
-    "case_fixture": "mock/healthfirst-case.json",
-    "chart_pdf": "assets/demo/patient_chart_sarah_martinez.pdf",
-    "prescription_pdf": "assets/demo/prescription_ozempic_martinez.pdf",
+    "case_fixture": "demo/sarah-martinez.json",
+    "chart_pdf": "demo/pdfs/patient_chart_sarah_martinez.pdf",
+    "prescription_pdf": "demo/pdfs/prescription_ozempic_martinez.pdf",
     "public_chart": "/demo/patient_chart_sarah_martinez.pdf",
     "public_prescription": "/demo/prescription_ozempic_martinez.pdf"
   },

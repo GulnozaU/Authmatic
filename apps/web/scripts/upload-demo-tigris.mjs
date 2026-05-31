@@ -72,11 +72,11 @@ async function main() {
   await ensureBucket();
   const chart = await upload(
     "demo/patient_chart_sarah_martinez.pdf",
-    path.join(repoRoot, "assets/demo/patient_chart_sarah_martinez.pdf")
+    path.join(repoRoot, "demo/pdfs/patient_chart_sarah_martinez.pdf")
   );
   const rx = await upload(
     "demo/prescription_ozempic_martinez.pdf",
-    path.join(repoRoot, "assets/demo/prescription_ozempic_martinez.pdf")
+    path.join(repoRoot, "demo/pdfs/prescription_ozempic_martinez.pdf")
   );
 
   console.log("Updating demo_cases in InsForge with Tigris URLs...");
@@ -86,7 +86,7 @@ async function main() {
   });
 
   const caseJson = JSON.parse(
-    fs.readFileSync(path.join(repoRoot, "mock/healthfirst-case.json"), "utf-8")
+    fs.readFileSync(path.join(repoRoot, "demo/sarah-martinez.json"), "utf-8")
   );
   caseJson.assets = {
     ...caseJson.assets,
