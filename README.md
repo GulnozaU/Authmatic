@@ -23,11 +23,15 @@
 ├── apps/
 │   ├── web/                   ← Next.js 14 UI
 │   │   └── src/app/
-│   │       ├── page.tsx       ← dropzone + 3 one-click scenario tiles
-│   │       ├── run/[id]/      ← audit page (every step cited)
+│   │       ├── login/         ← clinic sign-in (demo accounts printed on page)
+│   │       ├── dashboard/     ← KPIs, recent runs, PA submissions list
+│   │       ├── page.tsx       ← New PA — 4 patient cases + "Run 4 in parallel" + Maria Santos safety
+│   │       ├── run/[id]/      ← live agent typing into HealthFirst form
+│   │       ├── batch/[id]/    ← parallel-run watcher (4 forms filling at once)
+│   │       ├── security/      ← HIPAA compliance log (Opsera + sign-ins)
 │   │       ├── receipt/[id]/  ← payer-portal-style confirmation page
-│   │       ├── portal/healthfirst/  ← mock HealthFirst portal Rtrvr drives
-│   │       └── api/           ← run, sample, stream, pa, portal handlers
+│   │       ├── portal/healthfirst/  ← HealthFirst provider portal Rtrvr drives
+│   │       └── api/           ← run, sample, stream, pa, portal, dashboard, batch, security-log handlers
 │   └── agent/                 ← FastAPI agent service (4-verb ReAct loop)
 │       ├── main.py            ← endpoints + SSE
 │       ├── src/loop.py        ← the loop itself

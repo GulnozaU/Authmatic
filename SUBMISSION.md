@@ -122,14 +122,23 @@ https://github.com/r2st/Authmatic
 ```
 https://z739c3mi.insforge.site/
 
-Operator view (homepage). Three one-click scenarios:
-- Happy path  — Lisinopril 10mg → UnitedHealthcare. Drops, parses, verifies, files, returns receipt.
-- Diff payer  — Ozempic for Sarah Martinez → HealthFirst. Proves routing by member ID, not hardcoded payer.
-- Safety net  — Same Rx with an extra SSN. Opsera flags patient_ssn; agent halts before submission, no receipt issued.
+Sign in to the clinic console with one of the demo accounts on the sign-in page:
+  ma@bayarea-care.com / demo123        (Medical assistant)
+  emily.chen@bayarea-care.com / demo123 (Provider, Bay Area Primary Care)
 
-System view — direct: https://z739c3mi.insforge.site/portal/healthfirst/prior-auth?autofill=1
-Watch the agent type into the HealthFirst provider portal field-by-field,
-then submit and land on a Pending Review status page with a real PA reference number.
+Inside the console:
+- /dashboard   — KPIs (Submissions / Approved / Pending / Opsera Pass Rate),
+                 recent agent runs, PA submissions list.
+- /            — New PA. Four pre-loaded patients (Sarah Martinez/Ozempic,
+                 James Wilson/Lisinopril, Robert Kim/Humira, Lisa Patel/Mounjaro).
+                 "Run 4 patients in parallel" launches four agents at once.
+                 Maria Santos at the bottom = safety demo, Opsera blocks SSN.
+- /run/<id>    — Live agent typing into the HealthFirst provider portal,
+                 ends in green AUTHORIZATION REFERENCE banner with a real PA-2026-XXXXXX.
+- /security    — HIPAA-grade compliance log: every Opsera VERIFY pass,
+                 every PHI block, every sign-in.
+- /portal/healthfirst/prior-auth?autofill=1 — Standalone system view of the
+                 payer portal being filled.
 ```
 
 ## Team
