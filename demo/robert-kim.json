@@ -1,0 +1,5 @@
+{
+  "demo_id": "robert-humira-healthfirst",
+  "patient": { "full_name": "Robert Kim", "member_id": "HF77190234" },
+  "medication": { "name": "Humira", "dosage": "40mg every 2 weeks" }
+}
