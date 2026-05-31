@@ -66,8 +66,9 @@ async function nextReferenceId(): Promise<string> {
     let next = 451;
     const latest = data?.[0]?.reference_id as string | undefined;
     if (latest) {
-      const num = parseInt(latest.replace(/\D/g, ""), 10);
-      if (num >= next) next = num + 1;
+      const match = latest.match(/PA-2026-(\d+)$/i);
+      const num = match ? parseInt(match[1], 10) : NaN;
+      if (!Number.isNaN(num) && num >= next) next = num + 1;
     }
     counter = next + 1;
     return `PA-2026-${String(next).padStart(5, "0")}`;

@@ -12,7 +12,11 @@ import {
 import { createSubmission } from "./submissions";
 
 function baseUrl() {
-  return process.env.WEB_URL ?? "http://localhost:3000";
+  if (process.env.WEB_URL?.trim()) return process.env.WEB_URL.trim();
+  if (process.env.VERCEL_URL?.trim()) {
+    return `https://${process.env.VERCEL_URL.trim()}`;
+  }
+  return "http://localhost:3000";
 }
 
 function sleep(ms: number) {
