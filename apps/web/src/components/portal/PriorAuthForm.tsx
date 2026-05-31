@@ -44,7 +44,6 @@ export function PriorAuthForm({ autofill = false, runId }: Props) {
         setFilling(null);
         setTimeout(() => {
           formRef.current?.requestSubmit();
-          setSubmitted(true);
         }, 600);
         return;
       }
@@ -57,6 +56,31 @@ export function PriorAuthForm({ autofill = false, runId }: Props) {
     return () => clearInterval(interval);
   }, [autofill]);
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    if (!autofill) return;
+
+    e.preventDefault();
+    setSubmitted(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries()) as Record<string, string>;
+
+    try {
+      const res = await fetch("/api/pa/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = (await res.json()) as { status_url?: string };
+      if (data.status_url) {
+        window.location.assign(data.status_url);
+      }
+    } catch {
+      setSubmitted(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 font-portal">
       <PortalHeader title="Pharmacy Prior Authorization Request" />
@@ -65,7 +89,7 @@ export function PriorAuthForm({ autofill = false, runId }: Props) {
         {autofill && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
             <strong>Agent filling form</strong>
-            {runId && <> — run {runId.slice(0, 8)}…</>}
+            {runId ? <> — run {runId.slice(0, 8)}…</> : null}
             {filling && (
               <span className="mt-1 block font-mono text-xs">
                 Filling: {filling} ✓
@@ -89,6 +113,7 @@ export function PriorAuthForm({ autofill = false, runId }: Props) {
           id="prior-auth-form"
           action="/api/pa/submit"
           method="POST"
+          onSubmit={handleSubmit}
           className="rounded-xl border border-hf-border bg-white shadow-sm"
         >
           <div className="border-b border-hf-border bg-hf-sky px-6 py-3">

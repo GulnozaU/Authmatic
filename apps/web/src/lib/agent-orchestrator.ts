@@ -76,9 +76,9 @@ export async function runAgentPipeline(
       1400
     );
 
-    const portalFillUrl = `${baseUrl()}/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
-    updateRun(runId, { portal_url: portalFillUrl });
-    onEvent({ type: "portal", url: portalFillUrl, run: getRun(runId) });
+    const portalPath = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
+    updateRun(runId, { portal_url: portalPath });
+    onEvent({ type: "portal", path: portalPath, run: getRun(runId) });
 
     await emitStep(
       runId,
@@ -87,7 +87,7 @@ export async function runAgentPipeline(
         verb: "SUBMIT",
         sponsor: "Rtrvr",
         plan: "Open HealthFirst provider portal, fill prior-auth form, and submit.",
-        tool_input: { portal_url: portalFillUrl, fields: formPayload },
+        tool_input: { portal_path: portalPath, fields: formPayload },
       },
       onEvent,
       2500

@@ -20,6 +20,9 @@ type DbRow = {
   reviewer_id?: string | null;
 };
 
+const memory = new Map<string, PaSubmission>();
+let counter = 451;
+
 function rowToSubmission(row: DbRow): PaSubmission {
   return {
     reference_id: row.reference_id,
@@ -41,74 +44,121 @@ function rowToSubmission(row: DbRow): PaSubmission {
   };
 }
 
+function nextLocalReferenceId(): string {
+  const id = `PA-2026-${String(counter).padStart(5, "0")}`;
+  counter += 1;
+  return id;
+}
+
 async function nextReferenceId(): Promise<string> {
-  const insforge = getInsForgeAdmin();
-  const { data, error } = await insforge.database
-    .from("pa_submissions")
-    .select("reference_id")
-    .order("reference_id", { ascending: false })
-    .limit(1);
+  if (!isInsForgeConfigured()) return nextLocalReferenceId();
 
-  if (error) throw new Error(error.message);
+  try {
+    const insforge = getInsForgeAdmin();
+    const { data, error } = await insforge.database
+      .from("pa_submissions")
+      .select("reference_id")
+      .order("reference_id", { ascending: false })
+      .limit(1);
 
-  let counter = 451;
-  const latest = data?.[0]?.reference_id as string | undefined;
-  if (latest) {
-    const num = parseInt(latest.replace(/\D/g, ""), 10);
-    if (num >= counter) counter = num + 1;
+    if (error) return nextLocalReferenceId();
+
+    let next = 451;
+    const latest = data?.[0]?.reference_id as string | undefined;
+    if (latest) {
+      const num = parseInt(latest.replace(/\D/g, ""), 10);
+      if (num >= next) next = num + 1;
+    }
+    counter = next + 1;
+    return `PA-2026-${String(next).padStart(5, "0")}`;
+  } catch {
+    return nextLocalReferenceId();
   }
+}
 
-  return `PA-2026-${String(counter).padStart(5, "0")}`;
+function saveLocal(submission: PaSubmission): PaSubmission {
+  memory.set(submission.reference_id, submission);
+  return submission;
 }
 
 export async function createSubmission(payload: PaFormPayload): Promise<PaSubmission> {
-  const insforge = getInsForgeAdmin();
   const reference_id = await nextReferenceId();
   const submitted_at = new Date().toISOString();
-
-  const row = {
-    reference_id,
+  const submission: PaSubmission = {
     ...payload,
-    status: "pending_review" as PaStatus,
+    reference_id,
+    status: "pending_review",
     submitted_at,
   };
 
-  const { data, error } = await insforge.database
-    .from("pa_submissions")
-    .insert([row])
-    .select("*");
+  if (!isInsForgeConfigured()) {
+    return saveLocal(submission);
+  }
 
-  if (error) throw new Error(error.message);
-  return rowToSubmission(data![0] as DbRow);
+  try {
+    const insforge = getInsForgeAdmin();
+    const { data, error } = await insforge.database
+      .from("pa_submissions")
+      .insert([{ reference_id, ...payload, status: "pending_review", submitted_at }])
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    return rowToSubmission(data![0] as DbRow);
+  } catch {
+    return saveLocal(submission);
+  }
 }
 
 export async function getSubmission(reference_id: string): Promise<PaSubmission | null> {
-  const insforge = getInsForgeAdmin();
-  const { data, error } = await insforge.database
-    .from("pa_submissions")
-    .select("*")
-    .eq("reference_id", reference_id)
-    .limit(1);
+  if (memory.has(reference_id)) {
+    return memory.get(reference_id) ?? null;
+  }
 
-  if (error) throw new Error(error.message);
-  if (!data?.length) return null;
-  return rowToSubmission(data[0] as DbRow);
+  if (!isInsForgeConfigured()) return null;
+
+  try {
+    const insforge = getInsForgeAdmin();
+    const { data, error } = await insforge.database
+      .from("pa_submissions")
+      .select("*")
+      .eq("reference_id", reference_id)
+      .limit(1);
+
+    if (error) throw new Error(error.message);
+    if (!data?.length) return null;
+    return rowToSubmission(data[0] as DbRow);
+  } catch {
+    return memory.get(reference_id) ?? null;
+  }
 }
 
 export async function updateSubmission(
   reference_id: string,
   patch: Partial<PaSubmission>
 ): Promise<PaSubmission | null> {
-  const insforge = getInsForgeAdmin();
-  const { data, error } = await insforge.database
-    .from("pa_submissions")
-    .update(patch)
-    .eq("reference_id", reference_id)
-    .select("*");
+  const local = memory.get(reference_id);
+  if (local) {
+    const updated = { ...local, ...patch };
+    memory.set(reference_id, updated);
+    return updated;
+  }
 
-  if (error) throw new Error(error.message);
-  if (!data?.length) return null;
-  return rowToSubmission(data[0] as DbRow);
+  if (!isInsForgeConfigured()) return null;
+
+  try {
+    const insforge = getInsForgeAdmin();
+    const { data, error } = await insforge.database
+      .from("pa_submissions")
+      .update(patch)
+      .eq("reference_id", reference_id)
+      .select("*");
+
+    if (error) throw new Error(error.message);
+    if (!data?.length) return null;
+    return rowToSubmission(data[0] as DbRow);
+  } catch {
+    return null;
+  }
 }
 
 export { isInsForgeConfigured };

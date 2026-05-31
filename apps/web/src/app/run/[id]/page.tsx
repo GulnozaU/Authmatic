@@ -10,7 +10,7 @@ export default function RunPage() {
   const runId = String(params.id ?? "");
   const [run, setRun] = useState<AgentRun | null>(null);
   const [steps, setSteps] = useState<AgentStep[]>([]);
-  const [portalOpened, setPortalOpened] = useState(false);
+  const [portalPath, setPortalPath] = useState<string | null>(null);
   const portalRef = useRef(false);
 
   useEffect(() => {
@@ -23,6 +23,7 @@ export default function RunPage() {
         type: string;
         step?: AgentStep;
         run?: AgentRun;
+        path?: string;
         url?: string;
       };
 
@@ -37,10 +38,17 @@ export default function RunPage() {
         });
       }
 
-      if (data.type === "portal" && data.url && !portalRef.current) {
+      if (data.type === "portal" && !portalRef.current) {
         portalRef.current = true;
-        setPortalOpened(true);
-        window.open(data.url, "_blank", "noopener,noreferrer");
+        let path = data.path;
+        if (!path && data.url) {
+          try {
+            path = new URL(data.url).pathname + new URL(data.url).search;
+          } catch {
+            path = `/portal/healthfirst/prior-auth?autofill=1&run=${runId}`;
+          }
+        }
+        if (path) setPortalPath(path);
       }
     };
 
@@ -62,7 +70,7 @@ export default function RunPage() {
         <p className="font-mono text-xs text-slate-400">{runId}</p>
       </header>
 
-      <main className="mx-auto max-w-2xl space-y-6 px-6 py-8">
+      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
         {receipt && done && (
           <a
             href={receipt}
@@ -71,15 +79,22 @@ export default function RunPage() {
             <p className="text-xs uppercase tracking-wider opacity-90">
               Authorization reference
             </p>
-            <p className="mt-1 text-2xl font-bold font-mono">{run?.reference_id}</p>
+            <p className="mt-1 font-mono text-2xl font-bold">{run?.reference_id}</p>
             <p className="mt-2 text-sm underline opacity-90">View submission receipt →</p>
           </a>
         )}
 
-        {portalOpened && (
-          <p className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-900">
-            HealthFirst portal opened in new tab — watch the agent fill the form.
-          </p>
+        {portalPath && (
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b bg-hf-sky px-4 py-2 text-sm font-medium text-hf-navy">
+              HealthFirst portal — agent filling form live
+            </div>
+            <iframe
+              title="HealthFirst prior auth form"
+              src={portalPath}
+              className="h-[520px] w-full border-0 bg-white"
+            />
+          </div>
         )}
 
         <div className="space-y-3">
