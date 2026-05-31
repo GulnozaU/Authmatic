@@ -207,13 +207,15 @@ export async function runAgentPipeline(
     );
 
     const reviewMs = 2000;
-    await adjudicateReference(submission.reference_id, reviewMs);
+    const adjudication = await adjudicateReference(submission.reference_id, reviewMs);
+    const finalStatus = adjudication?.status ?? "approved";
 
     updateStep(runId, 4, {
       tool_output: {
         reference_id: submission.reference_id,
-        status: "approved",
+        status: finalStatus,
         review_delay_ms: reviewMs,
+        denial_reason: adjudication?.denial_reason,
       },
     });
 
@@ -234,7 +236,7 @@ export async function runAgentPipeline(
         receipt_url: receipt_absolute,
         form_payload: formPayload,
         artifacts: baseArtifacts,
-        status: "approved",
+        status: finalStatus,
       });
       updateRun(runId, { tigris_artifacts: artifacts });
       persistOutput = {
