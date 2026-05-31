@@ -17,7 +17,12 @@ from pathlib import Path
 import asyncpg
 
 from .insforge_client import plan_next_step
-from .persist import append_event, update_status
+from .persist import (
+    append_event,
+    fetch_plan_id_by_member_id,
+    link_patient_by_member_id,
+    update_status,
+)
 from .tools import execute, read_web, verify
 
 MAX_ITERATIONS = 5
@@ -67,10 +72,19 @@ async def run_agent(
                 tool_output = await execute.parse_prescription(pdf_bytes)
                 parsed = tool_output
             elif verb == "READ-WEB":
+                # Resolve the patient's actual plan from the parsed member_id
+                # so we look up the right payer's rules (Ozempic on
+                # HF-CHOICE-PLUS, Humira on AET-OPEN-CHOICE, etc.). The
+                # planner's default is UHC; the seeded patient overrides it.
+                resolved_plan_id = (
+                    await fetch_plan_id_by_member_id(pool, parsed.get("member_id"))
+                    or args.get("plan_id", "")
+                )
                 tool_output = await read_web.fetch_coverage_rule(
                     drug_ndc=parsed.get("drug_ndc", args.get("drug_ndc", "")),
-                    plan_id=args.get("plan_id", ""),
+                    plan_id=resolved_plan_id,
                 )
+                args = {**args, "plan_id": resolved_plan_id}
                 coverage_rule = tool_output
             elif verb == "VERIFY":
                 packet = _build_packet(parsed, rationale)
@@ -85,15 +99,26 @@ async def run_agent(
                 rationale = args.get("rationale") or _draft_rationale(
                     parsed, coverage_rule
                 )
+                # If the PDF identified a known patient by member_id, swap
+                # the prior_auths.patient_id over from the fallback row.
+                resolved_patient_id = await link_patient_by_member_id(
+                    pool, parsed.get("member_id")
+                )
                 await update_status(
                     pool=pool, pa_id=run_id,
                     status="pending",
                     drug_name=parsed.get("drug_name"),
+                    drug_ndc=parsed.get("drug_ndc"),
                     dose=parsed.get("dose"),
                     diagnosis_code=parsed.get("icd10"),
                     rationale=rationale,
+                    patient_id=resolved_patient_id,
                 )
-                tool_output = {"persisted": True, "rationale": rationale[:120] + "…"}
+                tool_output = {
+                    "persisted": True,
+                    "linked_patient": resolved_patient_id is not None,
+                    "rationale": rationale[:120] + "…",
+                }
             else:
                 raise ValueError(f"Unknown verb: {verb}")
 

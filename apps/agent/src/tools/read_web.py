@@ -42,7 +42,7 @@ async def fetch_coverage_rule(drug_ndc: str, plan_id: str) -> dict:
     s = get_settings()
 
     if s.demo_fixture_mode:
-        return _fixture("uhc-rules.json", key=f"{drug_ndc}|{plan_id}")
+        return _lookup_coverage_rule(drug_ndc, plan_id)
 
     task = (
         "Log into the UHC provider portal and find the prior-auth "
@@ -70,7 +70,7 @@ async def submit_pa_form(
 
     if s.demo_fixture_mode:
         # Local receipt page so the demo can't fail on conference WiFi.
-        return f"http://localhost:3000/receipt/{pa_id[:8]}"
+        return f"{s.web_base_url.rstrip('/')}/receipt/{pa_id}"
 
     # Hydrate patient fields from Postgres (we don't put PHI in the planner).
     async with pool.acquire() as conn:
@@ -117,3 +117,84 @@ def _fixture(name: str, *, key: str | None = None) -> dict:
     if isinstance(data, dict) and "default" in data:
         return data["default"]
     return data
+
+
+def _lookup_coverage_rule(drug_ndc: str, plan_id: str) -> dict:
+    """Find a coverage rule for (drug_ndc, plan_id) across both fixture sources.
+
+    Lookup order:
+      1. uhc-rules.json keyed by `<ndc>|<plan>` (the simple Lisinopril/
+         Metformin fixtures).
+      2. mock_data.json's payer_coverage_rules (Ozempic/Humira/Dupixent
+         across HealthFirst + Aetna).
+      3. uhc-rules.json's `default` (generic fallback).
+
+    Always returns the shape downstream code expects:
+        {payer, covered, requires_pa, criteria_text}
+    """
+    key = f"{drug_ndc}|{plan_id}"
+    s = get_settings()
+
+    # 1. Targeted hit in uhc-rules.json.
+    uhc_path = os.path.join(s.fixtures_path, "uhc-rules.json")
+    with open(uhc_path) as f:
+        uhc = json.load(f)
+    if isinstance(uhc, dict) and key in uhc:
+        return uhc[key]
+
+    # 2. mock_data.json — keyed indirectly via drug_id → ndc.
+    mock = _load_mock_coverage_rules()
+    if key in mock:
+        return mock[key]
+
+    # 3. uhc-rules.json default.
+    if isinstance(uhc, dict) and "default" in uhc:
+        return uhc["default"]
+    return uhc
+
+
+_MOCK_RULES_CACHE: dict[str, dict] | None = None
+
+
+def _load_mock_coverage_rules() -> dict[str, dict]:
+    """Build a (ndc|plan_id) → coverage-rule map from mock_data.json once.
+
+    Projects to the same {payer, covered, requires_pa, criteria_text} shape
+    the rest of the app expects.
+    """
+    global _MOCK_RULES_CACHE
+    if _MOCK_RULES_CACHE is not None:
+        return _MOCK_RULES_CACHE
+
+    s = get_settings()
+    path = os.path.join(s.fixtures_path, "mock_data.json")
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        _MOCK_RULES_CACHE = {}
+        return _MOCK_RULES_CACHE
+
+    # Build cross-reference maps.
+    drug_id_to_ndc = {d["id"]: d["ndc"] for d in data.get("drugs", [])}
+    insurer_id_to_name = {}
+    for ins_key in ("insurer", "second_insurer"):
+        ins = data.get(ins_key)
+        if ins:
+            insurer_id_to_name[ins["id"]] = ins["name"]
+
+    rules: dict[str, dict] = {}
+    for r in data.get("payer_coverage_rules", []):
+        ndc = drug_id_to_ndc.get(r["drug_id"])
+        if not ndc:
+            continue
+        key = f"{ndc}|{r['plan_id']}"
+        rules[key] = {
+            "payer": insurer_id_to_name.get(r["insurer_id"], r["insurer_id"]),
+            "covered": r["covered"],
+            "requires_pa": r["requires_pa"],
+            "criteria_text": r.get("criteria_text", ""),
+        }
+
+    _MOCK_RULES_CACHE = rules
+    return rules

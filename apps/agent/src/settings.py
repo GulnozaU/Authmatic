@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     opsera_mcp_url: str = "https://mcp.opsera.io/mcp"
     opsera_token: str = ""
 
+    # Where the user's browser hits this app — used to build the receipt
+    # URL that the payer-portal step returns. In real production this would
+    # be the payer's confirmation URL, not ours.
+    web_base_url: str = "http://localhost:3000"
+
     # Demo
     demo_fixture_mode: bool = False
     fixtures_path: str = os.environ.get(

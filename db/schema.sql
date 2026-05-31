@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS patients (
   full_name   TEXT NOT NULL,
   dob         DATE NOT NULL,
   plan_id     TEXT NOT NULL,                       -- e.g. "UHC-CHOICE-PLUS"
-  member_id   TEXT NOT NULL,
+  member_id   TEXT NOT NULL UNIQUE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

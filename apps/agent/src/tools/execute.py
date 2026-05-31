@@ -152,6 +152,8 @@ def _extract_letterhead(text: str) -> dict:
         ("drug_name", r"Requested Drug\s+(\S+)"),
         ("drug_ndc", r"Drug NDC(?:\s*\(approx\))?\s+(\d[\d-]+)"),
         ("icd10", r"Primary Diagnosis \(ICD-?10\)\s+([A-Z]\d{2}(?:\.\d+)?)"),
+        ("member_id", r"Member ID:?\s+(\S+)"),
+        ("patient_name", r"Patient Name\s+(.+?)(?:\s{2,}|\n|$)"),
     ]
     for key, pat in patterns:
         m = re.search(pat, text)
@@ -195,6 +197,8 @@ def _extract_simple(text: str) -> dict:
         ("drug_ndc", r"NDC[: ]+(\d{4,5}-\d{3,4}-\d{1,2})"),
         ("dose", r"(?i)dose[: ]+([\d.]+\s*\w+)"),
         ("icd10", r"ICD-?10[: ]+([A-Z]\d{2}(?:\.\d+)?)"),
+        ("member_id", r"Member ID:\s+(\S+)"),
+        ("patient_name", r"Name:\s+(.+?)(?:\n|$)"),
     ]
     for key, pat in patterns:
         m = re.search(pat, text)

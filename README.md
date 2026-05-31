@@ -26,7 +26,8 @@
 │   └── architecture.md    ← Full system architecture
 ├── scripts/
 │   ├── smoke.sh           ← Hello-world each sponsor (run at preflight)
-│   ├── seed.sh            ← Populate demo patients + prior approvals
+│   ├── seed.sh            ← Wrapper for `seed.py`
+│   ├── seed.py            ← Populate demo patients + prior approvals
 │   └── reset.sh           ← Wipe + re-seed for a clean demo run
 └── demo/
     ├── pitch-script.md    ← 3-minute pitch

@@ -15,11 +15,14 @@ import asyncpg
 # A demo patient gets seeded on every fresh run if none exists — see
 # scripts/seed.sh for the full set. This is the fallback so a clean DB
 # doesn't blow up.
+# Same identity the simple Rx PDFs (Lisinopril/Metformin from gen_demo_pdfs.py)
+# reference. Aligned with scripts/seed.py so a seedless boot still resolves
+# the simple-PDF demo path.
 _FALLBACK_PATIENT = {
     "full_name": "Jane Doe",
     "dob": date(1968, 4, 12),
     "plan_id": "UHC-CHOICE-PLUS",
-    "member_id": "UHC-000000-DEMO",
+    "member_id": "UHC-000000-DEMO1",
 }
 
 
@@ -31,8 +34,12 @@ async def create_run(pool: asyncpg.Pool, pdf_bytes: bytes, filename: str) -> str
     """
     async with pool.acquire() as conn:
         async with conn.transaction():
+            # Always default to the canonical Jane Doe fallback. The agent's
+            # PERSIST step will swap to the real patient via member_id once
+            # the PDF has been parsed.
             patient_id = await conn.fetchval(
-                "SELECT id FROM patients ORDER BY created_at DESC LIMIT 1"
+                "SELECT id FROM patients WHERE member_id = $1",
+                _FALLBACK_PATIENT["member_id"],
             )
             if patient_id is None:
                 patient_id = await conn.fetchval(
@@ -101,7 +108,9 @@ async def update_status(
     drug_name: str | None = None,
     dose: str | None = None,
     diagnosis_code: str | None = None,
+    drug_ndc: str | None = None,
     rationale: str | None = None,
+    patient_id: str | None = None,
 ) -> None:
     async with pool.acquire() as conn:
         await conn.execute(
@@ -112,10 +121,46 @@ async def update_status(
               drug_name      = COALESCE($4, drug_name),
               dose           = COALESCE($5, dose),
               diagnosis_code = COALESCE($6, diagnosis_code),
-              rationale      = COALESCE($7, rationale)
+              drug_ndc       = COALESCE($7, drug_ndc),
+              rationale      = COALESCE($8, rationale),
+              patient_id     = COALESCE($9, patient_id)
             WHERE id = $1
             """,
-            pa_id, status, receipt_url, drug_name, dose, diagnosis_code, rationale,
+            pa_id, status, receipt_url, drug_name, dose, diagnosis_code,
+            drug_ndc, rationale, patient_id,
+        )
+
+
+async def link_patient_by_member_id(
+    pool: asyncpg.Pool, member_id: str | None
+) -> str | None:
+    """Return the patient.id matching this member_id, or None if no match.
+
+    The seed populates patients keyed by `member_id` (which is unique within a
+    payer). We use that to swap the prior_auths.patient_id from the fallback
+    (Jane Doe) to whoever the dropped PDF actually identifies.
+    """
+    if not member_id:
+        return None
+    async with pool.acquire() as conn:
+        pid = await conn.fetchval(
+            "SELECT id FROM patients WHERE member_id = $1", member_id,
+        )
+    return str(pid) if pid else None
+
+
+async def fetch_plan_id_by_member_id(
+    pool: asyncpg.Pool, member_id: str | None
+) -> str | None:
+    """Return the patient's plan_id (e.g. 'HF-CHOICE-PLUS') for a given
+    member_id, so the agent can scope its coverage-rule lookup to the
+    right payer.
+    """
+    if not member_id:
+        return None
+    async with pool.acquire() as conn:
+        return await conn.fetchval(
+            "SELECT plan_id FROM patients WHERE member_id = $1", member_id,
         )
 
 
