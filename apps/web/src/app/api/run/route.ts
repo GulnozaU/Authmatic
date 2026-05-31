@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { defaultPayload, runAgentPipeline } from "@/lib/agent-orchestrator";
 import { createRun } from "@/lib/agent-runs";
-import { BATCH_DEMO_IDS, DEMO_CASES, getDemoCase, type DemoCaseId } from "@/lib/demo-cases";
+import { BATCH_DEMO_IDS, DEMO_CASES, getDemoCase, LIVE_BATCH_IDS, type DemoCaseId } from "@/lib/demo-cases";
 import { createBatch } from "@/lib/batch-runs";
 
 function parseCaseId(raw: unknown): DemoCaseId | undefined {
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 function startBatch(caseIds: string[]) {
   const batchId = randomUUID();
   const validIds = caseIds.filter((id) => id in DEMO_CASES) as DemoCaseId[];
-  const ids = validIds.length ? validIds : BATCH_DEMO_IDS;
+  const ids = validIds.length ? validIds : LIVE_BATCH_IDS;
 
   const runIds = ids.map(() => randomUUID());
 
