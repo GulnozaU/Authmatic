@@ -57,9 +57,10 @@ After the single happy path, switch tabs to `/dashboard` and the
 
 ## 2:30 – 3:00 — Close
 
-> **"Four sponsors — Daytona, Opsera, Insforge, Rtrvr — one autonomous
-> loop, with Tigris persisting the chart artifacts. Six hours. The
-> next thing we'd add is doctor-approval-over-SMS before the final
+> **"Five sponsors — Daytona, Opsera, Rtrvr, Insforge, Tigris — one
+> autonomous loop. Daytona extracts, Opsera verifies, Rtrvr submits,
+> Insforge persists the chain, Tigris holds the artifacts. Six hours.
+> The next thing we'd add is doctor-approval-over-SMS before the final
 > submit — we have the design, skipped for time."**
 
 **Planted-seed candidates** (pick one — judge will ask):
@@ -81,7 +82,7 @@ After the single happy path, switch tabs to `/dashboard` and the
 | "What stops it from filing a wrong PA?" | "Opsera VERIFY runs before every submit. We saw it work on Maria's case — extra SSN line, agent halted, no submission. Plus the planner won't move to ADJUDICATE without a clean VERIFY." |
 | "What's the HIPAA story?" | "PHI never enters the planner's prompt — only field names and types. The patient identifiers stay in Postgres and only get hydrated at form-fill time. The audit page makes every field defensible." |
 | "Did the agent really pick its actions?" | "Yes — Insforge's model gateway runs the planner on Llama-3.1-70B in JSON mode. The five-step lifecycle (EXTRACT → VERIFY → SUBMIT → ADJUDICATE → PERSIST) is the planner's output, not a hardcoded pipeline. Happy to run it live with a fresh PDF after the pitch." |
-| "Why these four sponsors?" | "Each one does the thing it was built for. Rtrvr for portals that don't have APIs. Daytona because we don't want to ship a parser — the agent writes one per chart. Opsera because regulated agents need a guard. Insforge because we needed Postgres + pgvector + a model gateway in one place." |
+| "Why these five sponsors?" | "Each one does the thing it was built for. Rtrvr for portals that don't have APIs. Daytona because we don't want to ship a parser — the agent writes one per chart. Opsera because regulated agents need a guard. Insforge because we needed Postgres + pgvector + a model gateway in one place. Tigris because every PA artifact (chart, prescription, signed receipt) needs durable S3-compatible storage we can replay from." |
 | "How long to add a new payer?" | "Two hours. One Rtrvr task template, one fixture, one entry in the known-payers list. We did UHC + HealthFirst first because those are the highest-volume in the clinic we built this for." |
 
 ## Cut list (in priority — drop top first)

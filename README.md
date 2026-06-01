@@ -4,7 +4,7 @@
 >
 > An autonomous agent that files real prior authorizations on real payer
 > portals in 90 seconds, with a HIPAA-grade audit trail. Built around
-> four sponsors: **Opsera · Daytona · Insforge · Rtrvr.ai**.
+> five sponsors: **Opsera · Daytona · Insforge · Rtrvr.ai · Tigris**.
 >
 > **Live demo:** https://z739c3mi.insforge.site/
 
@@ -98,36 +98,52 @@ daytona snapshot create authmatic-v1 \
 ### 4. Smoke test everything
 ```bash
 make smoke
-# expects: ✓ Rtrvr  ✓ Daytona  ✓ Opsera  ✓ Insforge
+# expects: ✓ Insforge  ✓ Daytona  ✓ Rtrvr  ✓ Agent  ✓ Parser
 ```
 
 ### 5. Seed demo data + run
 ```bash
 make seed
 make dev                         # runs web (3000) + agent (8000) concurrently
-open http://localhost:3000       # then click any of the three scenario tiles
+open http://localhost:3000       # sign in with a demo account, then file a PA
 ```
 
 ## Demo flow
 
-The homepage ships **three one-click scenarios** plus a free-form
-dropzone. Each scenario lands a distinct beat for the "Agents That Act"
-rubric:
+The live deploy is a **clinic console** — one screen, one job: file a
+new prior authorization. The judged path top to bottom:
 
-| Tile | What it proves | Sponsor highlight |
-|---|---|---|
-| **Happy path** — Lisinopril 10mg → UnitedHealthcare | The agent acts end-to-end: drops, parses, verifies, files, returns a receipt URL. | Daytona sandboxes the parse; Rtrvr files the form. |
-| **Different payer** — Ozempic for Sarah Martinez → HealthFirst | Routing is driven by member ID, not hardcoded. The same loop adapts to a different portal (`/portal/healthfirst/`). | Rtrvr drives the mock HealthFirst portal in `apps/web/src/app/portal/healthfirst/`. |
-| **Safety net** — Same Rx with an extra SSN | The agent *halts before submission* when Opsera flags PHI over-disclosure. No receipt is issued. The agent demonstrates not-acting when acting would be wrong. | Opsera MCP catches the SSN field; Insforge persists the halt reason for audit. |
+1. **Login** (`/login`) — clinic accounts (medical assistant or provider).
+   Demo accounts are printed on the page so judges can sign in:
+   `ma@bayarea-care.com / demo123` and `emily.chen@bayarea-care.com / demo123`.
+2. **Dashboard** (`/dashboard`) — KPIs, recent submissions, today's
+   queue across 4 patient cases.
+3. **New PA** (`/`) — four patient cards. Click **Try the demo** on
+   Sarah Martinez (Ozempic → HealthFirst) for the single happy path, or
+   **Run 4 patients in parallel** to watch the whole Friday queue
+   fan out at once.
+4. **Run page** (`/run/<id>`) — live SSE stream of the 5-step agent
+   lifecycle, with each card lighting up as the step completes:
+   - **EXTRACT** (Daytona) — sandbox parses the chart + prescription PDFs
+   - **VERIFY** (Opsera) — PHI / policy scan before anything leaves
+   - **SUBMIT** (Rtrvr) — real browser session drives the HealthFirst
+     portal at `/portal/healthfirst/prior-auth?autofill=1` and types
+     into the form field-by-field
+   - **ADJUDICATE** — the portal's rule engine returns a decision
+   - **PERSIST** (Insforge + Tigris) — chain into Postgres, artifacts
+     (chart, prescription, signed receipt) into Tigris
+5. **Receipt** (`/receipt/<id>`) — payer-style confirmation with
+   reference number `PA-2026-<id>`. Every field is citable back to a
+   source PDF in Tigris.
+6. **Security log** (`/security`) — HIPAA compliance trail: sign-ins,
+   Opsera halts, every action attributable to an operator.
 
-Free-form: drag any prescription PDF onto the dropzone for a custom run.
+**Safety beat:** the Maria Santos card embeds an extra SSN line. Opsera
+VERIFY catches it, the agent halts before submit, and the halt reason
+is written to `/security`. The agent demonstrates *not acting* when
+acting would be wrong.
 
-After every run the page auto-redirects to **`/run/:id`** — the audit
-chain. Each step is cited back to the source PDF and the sponsor tool
-that produced it. The receipt URL on the happy-path / different-payer
-tiles opens a payer-portal-style confirmation at **`/receipt/:id`**.
-
-Full walkthrough in [demo/pitch-script.md](demo/pitch-script.md).
+Full walkthrough: [demo/pitch-script.md](demo/pitch-script.md).
 
 ## Optional payer portal surface
 
@@ -167,13 +183,13 @@ Full detail: [`docs/architecture.md`](docs/architecture.md).
 
 | Sponsor | Role | Where in the code |
 |---------|------|-------------------|
-| **Rtrvr.ai** | READ-WEB + ACTION (drives payer portal) | `apps/agent/src/tools/read_web.py` |
-| **Daytona** | EXECUTE (sandboxed PDF parsing + normalization) | `apps/agent/src/tools/execute.py` |
-| **Opsera** | VERIFY (PHI exposure scan via MCP) | `apps/agent/src/tools/verify.py` |
-| **Insforge** | PERSIST (Postgres + pgvector + edge fn + model gateway) + planner LLM | `apps/agent/src/{insforge_client,persist}.py` |
+| **Daytona** | **EXTRACT** — sandboxed parser for chart + prescription PDFs | `apps/agent/src/tools/execute.py` |
+| **Opsera** | **VERIFY** — PHI / policy exposure scan via MCP, halts before submit | `apps/agent/src/tools/verify.py` |
+| **Rtrvr.ai** | **SUBMIT** — real browser session drives the HealthFirst provider portal | `apps/agent/src/tools/read_web.py` |
+| **Insforge** | **PERSIST** — Postgres + pgvector + edge fn + model gateway + auth | `apps/web/src/lib/insforge/admin.ts`, `apps/agent/src/{insforge_client,persist}.py` |
+| **Tigris** | **PERSIST** — S3-compatible storage for charts, prescriptions, signed receipts | `apps/web/src/lib/tigris/{client,persist-run}.ts` |
 
-Stretch (if time): NEAR AI (TEE attestation), Tigris (chart storage),
-Brain2 (voice trigger).
+Stretch (if time): NEAR AI (TEE attestation), Brain2 (voice trigger).
 
 ## Fallback mode
 
