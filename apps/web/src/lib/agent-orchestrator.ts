@@ -112,7 +112,9 @@ export async function runAgentPipeline(
         tool_output: extractOutput,
       },
       onEvent,
-      1800
+      // Theatrical pacing tightened so the run completes in ~10s instead of ~30s.
+      // Each card still animates in cleanly; total dead time dropped from 6.0s to 3.0s.
+      800
     );
 
     await emitStep(
@@ -125,7 +127,7 @@ export async function runAgentPipeline(
         tool_input: { fields: Object.keys(formPayload) },
       },
       onEvent,
-      600
+      400
     );
 
     const verify = await verifyWithOpsera(formPayload);
@@ -158,9 +160,12 @@ export async function runAgentPipeline(
         tool_input: { portal_path: portalPath, fields: formPayload },
       },
       onEvent,
-      1200
+      600
     );
 
+    // Race the live Rtrvr browser session against a 4s fallback to portal_autofill.
+    // Was 8s — but real Rtrvr calls either land fast or land never; 4s is enough to
+    // tell the difference and saves ~4s on every run that falls back.
     const rtrvr = await Promise.race<RtrvrResult>([
       rtrvrPromise,
       new Promise((resolve) =>
@@ -171,7 +176,7 @@ export async function runAgentPipeline(
               mode: "portal_autofill",
               error: "Rtrvr timeout — iframe autofill",
             }),
-          8000
+          4000
         )
       ),
     ]);
@@ -203,10 +208,12 @@ export async function runAgentPipeline(
         tool_input: { reference_id: submission.reference_id },
       },
       onEvent,
-      1500
+      700
     );
 
-    const reviewMs = 2000;
+    // Adjudication delay tightened from 2.0s → 0.6s — still feels like a
+    // payer rule engine ticking, doesn't pad the demo unnecessarily.
+    const reviewMs = 600;
     const adjudication = await adjudicateReference(submission.reference_id, reviewMs);
     const finalStatus = adjudication?.status ?? "approved";
 
@@ -224,35 +231,10 @@ export async function runAgentPipeline(
       bucket: process.env.TIGRIS_BUCKET ?? "authmatic-demo",
     };
 
-    let persistOutput: Record<string, unknown> = {
-      insforge: "pa_submissions (submit step)",
-      tigris_bucket: baseArtifacts.bucket,
-      reference_id: submission.reference_id,
-    };
-
-    try {
-      const { insforge_updated, artifacts } = await persistRunArtifacts(runId, {
-        reference_id: submission.reference_id,
-        receipt_url: receipt_absolute,
-        form_payload: formPayload,
-        artifacts: baseArtifacts,
-        status: finalStatus,
-      });
-      updateRun(runId, { tigris_artifacts: artifacts });
-      persistOutput = {
-        insforge: insforge_updated
-          ? "prior_auths + pa_submissions"
-          : "pa_submissions (submit step)",
-        tigris_bucket: artifacts.bucket,
-        chart: artifacts.chart,
-        prescription: artifacts.prescription,
-        receipt: artifacts.receipt,
-        reference_id: submission.reference_id,
-      };
-    } catch (err) {
-      console.error("[persist] failed:", err);
-    }
-
+    // Emit the PERSIST card optimistically so the user sees "Done" the moment
+    // the receipt is ready. The actual Tigris upload + prior_auths upsert run
+    // in the background and back-fill the card via a second SSE event when they
+    // complete. Cuts perceived wall-clock by another ~1-2s.
     await emitStep(
       runId,
       {
@@ -260,14 +242,46 @@ export async function runAgentPipeline(
         verb: "PERSIST",
         sponsor: "InsForge + Tigris",
         plan: "Store workflow in InsForge; PDFs and receipt in Tigris.",
-        tool_output: persistOutput,
+        tool_output: {
+          insforge: "pa_submissions (submit step)",
+          tigris_bucket: baseArtifacts.bucket,
+          reference_id: submission.reference_id,
+        },
       },
       onEvent,
-      900
+      500
     );
 
     updateRun(runId, { status: "completed" });
     onEvent({ type: "done", run: getRun(runId) });
+
+    // Fire-and-forget heavy persistence — don't block the response.
+    void persistRunArtifacts(runId, {
+      reference_id: submission.reference_id,
+      receipt_url: receipt_absolute,
+      form_payload: formPayload,
+      artifacts: baseArtifacts,
+      status: finalStatus,
+    })
+      .then(({ insforge_updated, artifacts }) => {
+        updateRun(runId, { tigris_artifacts: artifacts });
+        updateStep(runId, 5, {
+          tool_output: {
+            insforge: insforge_updated
+              ? "prior_auths + pa_submissions"
+              : "pa_submissions (submit step)",
+            tigris_bucket: artifacts.bucket,
+            chart: artifacts.chart,
+            prescription: artifacts.prescription,
+            receipt: artifacts.receipt,
+            reference_id: submission.reference_id,
+          },
+        });
+        onEvent({ type: "step", step: getRun(runId)!.steps[4], run: getRun(runId) });
+      })
+      .catch((err) => {
+        console.error("[persist] background failed:", err);
+      });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Agent run failed";
     updateRun(runId, { status: "error", error: message });
