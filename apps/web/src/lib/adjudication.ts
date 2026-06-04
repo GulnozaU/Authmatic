@@ -10,6 +10,19 @@ const STEP_THERAPY_KEYWORDS = [
   "despite",
   "therapy",
   "control",
+  "amlodipine",
+  "methotrexate",
+  "hypertension",
+  "bp",
+  "ace inhibitor",
+  "jnc",
+  "ra",
+  "arthritis",
+  "joint",
+  "swelling",
+  "persistent",
+  "glipizide",
+  "hba1c",
 ];
 
 interface RuleCheck {
@@ -51,7 +64,15 @@ function checkStepTherapy(justification: string, medication: string): RuleCheck 
 }
 
 function checkFormulary(medication: string): RuleCheck {
-  const covered = ["ozempic", "semaglutide", "mounjaro", "trulicity"];
+  const covered = [
+    "ozempic",
+    "semaglutide",
+    "mounjaro",
+    "trulicity",
+    "lisinopril",
+    "humira",
+    "adalimumab",
+  ];
   if (!covered.some((d) => medication.toLowerCase().includes(d))) {
     return {
       passed: false,

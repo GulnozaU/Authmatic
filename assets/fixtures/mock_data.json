@@ -1,0 +1,556 @@
+{
+  "_meta": {
+    "project": "Authmatic",
+    "purpose": "Demo mock data — all entities are fictitious",
+    "version": "1.0.0",
+    "generated": "2025-05-31"
+  },
+
+  "insurer": {
+    "id": "ins_healthfirst_ppo",
+    "name": "HealthFirst PPO",
+    "short_name": "HealthFirst",
+    "plan_types": ["PPO", "HMO", "EPO"],
+    "payer_id": "HF001",
+    "npi": "1487532901",
+    "phone": "(800) 555-4200",
+    "fax": "(800) 555-4201",
+    "pa_portal_url": "https://provider.healthfirst.com/pa",
+    "pa_phone": "(800) 555-4210",
+    "pa_fax": "(800) 555-4211",
+    "address": {
+      "street": "1 HealthFirst Plaza",
+      "city": "Sacramento",
+      "state": "CA",
+      "zip": "94203"
+    },
+    "logo_color": "#0057A8",
+    "plans": [
+      {
+        "id": "HF-CHOICE-PLUS",
+        "name": "HealthFirst Choice Plus PPO",
+        "tier": "PPO",
+        "formulary_tier_glp1": 4,
+        "pa_required_drugs": ["semaglutide", "dulaglutide", "liraglutide", "empagliflozin", "humira", "dupilumab"]
+      },
+      {
+        "id": "HF-SELECT-HMO",
+        "name": "HealthFirst Select HMO",
+        "tier": "HMO",
+        "formulary_tier_glp1": 4,
+        "pa_required_drugs": ["semaglutide", "humira", "dupilumab", "adalimumab"]
+      }
+    ]
+  },
+
+  "second_insurer": {
+    "id": "ins_aetna_ppo",
+    "name": "Aetna Better Health PPO",
+    "short_name": "Aetna",
+    "payer_id": "AETNA001",
+    "npi": "1902847561",
+    "phone": "(800) 555-7100",
+    "fax": "(800) 555-7101",
+    "pa_portal_url": "https://provider.aetna.com/pa",
+    "pa_phone": "(800) 555-7120",
+    "pa_fax": "(800) 555-7121",
+    "address": {
+      "street": "151 Farmington Avenue",
+      "city": "Hartford",
+      "state": "CT",
+      "zip": "06156"
+    },
+    "logo_color": "#7B1FA2",
+    "plans": [
+      {
+        "id": "AET-OPEN-CHOICE",
+        "name": "Aetna Open Choice PPO",
+        "tier": "PPO",
+        "formulary_tier_glp1": 3,
+        "pa_required_drugs": ["semaglutide", "adalimumab", "dupilumab"]
+      }
+    ]
+  },
+
+  "clinic": {
+    "id": "clinic_bayview_001",
+    "name": "Bayview Family Medical Group",
+    "short_name": "Bayview FMG",
+    "npi": "1234500001",
+    "tax_id": "94-3201847",
+    "phone": "(415) 555-0192",
+    "fax": "(415) 555-0193",
+    "address": {
+      "street": "995 Market Street, Suite 400",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103"
+    },
+    "billing_address": {
+      "street": "995 Market Street, Suite 400",
+      "city": "San Francisco",
+      "state": "CA",
+      "zip": "94103"
+    },
+    "specialty": "Primary Care / Internal Medicine",
+    "ehr": "Athena Health",
+    "locations": 4,
+    "notes": "4-clinic group in Oakland/SF Bay Area. Lead MA files ~40 PAs/week."
+  },
+
+  "providers": [
+    {
+      "id": "prov_chen_001",
+      "full_name": "Dr. Emily Chen",
+      "title": "MD",
+      "specialty": "Internal Medicine / Primary Care",
+      "npi": "1234567890",
+      "dea": "AC1234567",
+      "license": "CA G-78234",
+      "clinic_id": "clinic_bayview_001",
+      "phone": "(415) 555-0192",
+      "fax": "(415) 555-0193",
+      "email": "e.chen@bayviewfmg.com",
+      "role": "prescriber"
+    },
+    {
+      "id": "prov_okafor_002",
+      "full_name": "Dr. James Okafor",
+      "title": "MD",
+      "specialty": "Internal Medicine",
+      "npi": "1234567891",
+      "dea": "AO9876543",
+      "license": "CA G-91203",
+      "clinic_id": "clinic_bayview_001",
+      "phone": "(415) 555-0192",
+      "fax": "(415) 555-0193",
+      "email": "j.okafor@bayviewfmg.com",
+      "role": "prescriber"
+    }
+  ],
+
+  "staff": [
+    {
+      "id": "staff_maria_001",
+      "full_name": "Maria Delgado",
+      "role": "Lead Medical Assistant",
+      "clinic_id": "clinic_bayview_001",
+      "pa_volume_weekly": 40,
+      "avg_pa_time_min": 22,
+      "notes": "Primary persona — the demo user. Files all PAs for Dr. Chen and Dr. Okafor."
+    }
+  ],
+
+  "patients": [
+    {
+      "id": "pat_martinez_001",
+      "full_name": "Sarah Elena Martinez",
+      "dob": "1986-03-14",
+      "age": 39,
+      "gender": "Female",
+      "phone": "(415) 555-0247",
+      "address": {
+        "street": "2147 Valencia St",
+        "city": "San Francisco",
+        "state": "CA",
+        "zip": "94110"
+      },
+      "insurance": {
+        "insurer_id": "ins_healthfirst_ppo",
+        "plan_id": "HF-CHOICE-PLUS",
+        "member_id": "HF-45821973",
+        "group_number": "GRP-7821",
+        "rx_bin": "004336",
+        "rx_pcn": "ADV",
+        "relationship_to_subscriber": "Self"
+      },
+      "mrn": "BFM-2024-00831",
+      "pcp_id": "prov_chen_001",
+      "diagnoses": [
+        { "icd10": "E11.9", "description": "Type 2 Diabetes Mellitus, without complications", "onset": "2020-01" },
+        { "icd10": "E11.65", "description": "Type 2 DM with hyperglycemia", "onset": "2023-03" },
+        { "icd10": "I10", "description": "Essential (primary) hypertension", "onset": "2021-09" }
+      ],
+      "allergies": ["Penicillin (rash)", "Sulfa (hives)"],
+      "current_medications": [
+        { "drug": "Metformin HCl", "dose": "1000mg", "frequency": "BID", "duration_months": 18 },
+        { "drug": "Lisinopril", "dose": "10mg", "frequency": "QD", "duration_months": 36 },
+        { "drug": "Atorvastatin", "dose": "20mg", "frequency": "QD at night", "duration_months": 24 }
+      ],
+      "recent_labs": {
+        "date": "2025-05-10",
+        "hba1c": "8.9%",
+        "fasting_glucose": "187 mg/dL",
+        "egfr": "72 mL/min/1.73m2",
+        "ldl": "118 mg/dL",
+        "blood_pressure": "138/86 mmHg"
+      },
+      "demo_scenario": "primary",
+      "notes": "Primary demo patient. Uncontrolled T2DM despite 18mo Metformin. Requesting Ozempic PA."
+    },
+    {
+      "id": "pat_thompson_002",
+      "full_name": "Robert James Thompson",
+      "dob": "1971-07-22",
+      "age": 53,
+      "gender": "Male",
+      "phone": "(510) 555-0381",
+      "address": {
+        "street": "440 Grand Ave",
+        "city": "Oakland",
+        "state": "CA",
+        "zip": "94610"
+      },
+      "insurance": {
+        "insurer_id": "ins_aetna_ppo",
+        "plan_id": "AET-OPEN-CHOICE",
+        "member_id": "AET-78230014",
+        "group_number": "GRP-AET-3301",
+        "rx_bin": "020099",
+        "rx_pcn": "ADV",
+        "relationship_to_subscriber": "Self"
+      },
+      "mrn": "BFM-2023-01142",
+      "pcp_id": "prov_okafor_002",
+      "diagnoses": [
+        { "icd10": "M06.9", "description": "Rheumatoid arthritis, unspecified", "onset": "2019-04" },
+        { "icd10": "M06.011", "description": "Rheumatoid arthritis with rheumatoid factor of right shoulder", "onset": "2019-04" }
+      ],
+      "allergies": ["NSAIDs (GI bleed)"],
+      "current_medications": [
+        { "drug": "Methotrexate", "dose": "15mg", "frequency": "Weekly", "duration_months": 24 },
+        { "drug": "Folic Acid", "dose": "1mg", "frequency": "QD", "duration_months": 24 }
+      ],
+      "recent_labs": {
+        "date": "2025-05-08",
+        "das28_score": "4.8 (moderate disease activity)",
+        "crp": "18 mg/L (elevated)",
+        "esr": "42 mm/hr (elevated)",
+        "cbc": "Within normal limits",
+        "lft": "Within normal limits"
+      },
+      "demo_scenario": "secondary",
+      "notes": "Secondary demo patient. Moderate RA, inadequate response to MTX. Requesting Humira PA via Aetna."
+    },
+    {
+      "id": "pat_nguyen_003",
+      "full_name": "Linh Thi Nguyen",
+      "dob": "1994-11-03",
+      "age": 30,
+      "gender": "Female",
+      "phone": "(415) 555-0592",
+      "address": {
+        "street": "728 Irving St",
+        "city": "San Francisco",
+        "state": "CA",
+        "zip": "94122"
+      },
+      "insurance": {
+        "insurer_id": "ins_healthfirst_ppo",
+        "plan_id": "HF-SELECT-HMO",
+        "member_id": "HF-29031847",
+        "group_number": "GRP-9102",
+        "rx_bin": "004336",
+        "rx_pcn": "ADV",
+        "relationship_to_subscriber": "Self"
+      },
+      "mrn": "BFM-2025-00204",
+      "pcp_id": "prov_chen_001",
+      "diagnoses": [
+        { "icd10": "L20.9", "description": "Atopic dermatitis, unspecified", "onset": "2022-06" },
+        { "icd10": "L20.81", "description": "Atopic neurodermatitis", "onset": "2023-01" }
+      ],
+      "allergies": [],
+      "current_medications": [
+        { "drug": "Triamcinolone cream", "dose": "0.1%", "frequency": "BID to affected areas", "duration_months": 12 },
+        { "drug": "Cetirizine", "dose": "10mg", "frequency": "QD", "duration_months": 8 }
+      ],
+      "recent_labs": {
+        "date": "2025-04-22",
+        "ige_total": "840 IU/mL (elevated)",
+        "eosinophils": "0.6 × 10^9/L (elevated)",
+        "patch_test": "Positive: nickel, fragrance mix"
+      },
+      "demo_scenario": "tertiary",
+      "notes": "Tertiary demo patient. Moderate-severe atopic dermatitis failing topicals. Requesting Dupixent PA."
+    }
+  ],
+
+  "drugs": [
+    {
+      "id": "drug_ozempic_001",
+      "brand_name": "Ozempic",
+      "generic_name": "semaglutide",
+      "drug_class": "GLP-1 receptor agonist",
+      "ndc": "0169-4137-11",
+      "form": "subcutaneous injection",
+      "strengths": ["0.25mg/dose", "0.5mg/dose", "1mg/dose"],
+      "manufacturer": "Novo Nordisk",
+      "indication": "Type 2 Diabetes Mellitus",
+      "icd10_indications": ["E11.9", "E11.65", "E11.8"],
+      "starting_dose": "0.25mg SQ once weekly × 4 weeks",
+      "maintenance_dose": "0.5mg SQ once weekly",
+      "pa_required_plans": ["HF-CHOICE-PLUS", "HF-SELECT-HMO", "AET-OPEN-CHOICE"],
+      "step_therapy_required": ["Metformin", "or documented intolerance to Metformin"],
+      "lab_criteria": "HbA1c ≥ 8.0%",
+      "demo_scenario": "primary"
+    },
+    {
+      "id": "drug_humira_002",
+      "brand_name": "Humira",
+      "generic_name": "adalimumab",
+      "drug_class": "TNF-alpha inhibitor (biologic)",
+      "ndc": "0074-3799-02",
+      "form": "subcutaneous injection",
+      "strengths": ["40mg/0.4mL"],
+      "manufacturer": "AbbVie",
+      "indication": "Rheumatoid arthritis, Crohn's disease, psoriasis",
+      "icd10_indications": ["M06.9", "M05.79", "K50.90"],
+      "starting_dose": "160mg SQ (day 1), then 80mg (day 15)",
+      "maintenance_dose": "40mg SQ every 2 weeks",
+      "pa_required_plans": ["HF-CHOICE-PLUS", "HF-SELECT-HMO", "AET-OPEN-CHOICE"],
+      "step_therapy_required": ["Methotrexate ≥ 3 months", "or documented intolerance"],
+      "lab_criteria": "Documented moderate-severe disease activity (DAS28 > 3.2)",
+      "demo_scenario": "secondary"
+    },
+    {
+      "id": "drug_dupixent_003",
+      "brand_name": "Dupixent",
+      "generic_name": "dupilumab",
+      "drug_class": "IL-4/IL-13 receptor antagonist (biologic)",
+      "ndc": "0024-5913-02",
+      "form": "subcutaneous injection",
+      "strengths": ["300mg/2mL"],
+      "manufacturer": "Sanofi / Regeneron",
+      "indication": "Atopic dermatitis (moderate-severe), asthma",
+      "icd10_indications": ["L20.9", "L20.81", "L20.89"],
+      "starting_dose": "600mg SQ (two 300mg injections at separate sites)",
+      "maintenance_dose": "300mg SQ every 2 weeks",
+      "pa_required_plans": ["HF-CHOICE-PLUS", "HF-SELECT-HMO"],
+      "step_therapy_required": ["Topical corticosteroid ≥ 12 months", "and/or calcineurin inhibitor"],
+      "lab_criteria": "BSA ≥ 10% or EASI score ≥ 16",
+      "demo_scenario": "tertiary"
+    }
+  ],
+
+  "payer_coverage_rules": [
+    {
+      "id": "rule_hf_ozempic",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-CHOICE-PLUS",
+      "drug_id": "drug_ozempic_001",
+      "covered": true,
+      "requires_pa": true,
+      "formulary_tier": 4,
+      "criteria": [
+        "Diagnosis of Type 2 Diabetes Mellitus (ICD-10: E11.x)",
+        "HbA1c ≥ 8.0% within the last 6 months",
+        "Trial and failure of metformin monotherapy for ≥ 3 months (or documented intolerance/contraindication)",
+        "Prescriber must be MD, DO, NP, or PA with endocrinology or internal medicine specialty",
+        "eGFR ≥ 45 mL/min/1.73m2 (or documentation of renal monitoring plan)"
+      ],
+      "required_fields": ["patient_name", "dob", "member_id", "diagnosis_code", "hba1c_value", "hba1c_date", "prior_therapy", "drug_name", "dose", "prescriber_npi", "prescriber_name", "clinic_name", "clinic_phone"],
+      "criteria_text": "GLP-1 agonists require PA for T2DM. Must document: HbA1c ≥ 8.0%, failure of metformin monotherapy ≥ 3 months.",
+      "approval_rate_pct": 84,
+      "avg_decision_days": 3
+    },
+    {
+      "id": "rule_aetna_humira",
+      "insurer_id": "ins_aetna_ppo",
+      "plan_id": "AET-OPEN-CHOICE",
+      "drug_id": "drug_humira_002",
+      "covered": true,
+      "requires_pa": true,
+      "formulary_tier": 5,
+      "criteria": [
+        "Diagnosis of moderate-to-severe RA (ICD-10: M06.x or M05.x)",
+        "DAS28 score > 3.2 or documented functional impairment",
+        "Trial and failure of methotrexate ≥ 3 months (or documented contraindication)",
+        "Negative TB screening within 12 months",
+        "Prescriber must be board-certified rheumatologist or internal medicine"
+      ],
+      "required_fields": ["patient_name", "dob", "member_id", "diagnosis_code", "das28_score", "prior_therapy", "tb_screen_date", "drug_name", "dose", "prescriber_npi"],
+      "criteria_text": "Biologics require PA for RA. Must document: DAS28 > 3.2, failure of MTX ≥ 3 months, negative TB screen.",
+      "approval_rate_pct": 76,
+      "avg_decision_days": 5
+    },
+    {
+      "id": "rule_hf_dupixent",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-SELECT-HMO",
+      "drug_id": "drug_dupixent_003",
+      "covered": true,
+      "requires_pa": true,
+      "formulary_tier": 5,
+      "criteria": [
+        "Diagnosis of moderate-to-severe atopic dermatitis (ICD-10: L20.x)",
+        "BSA ≥ 10% or EASI score ≥ 16",
+        "Inadequate response to topical corticosteroids ≥ 12 months",
+        "Dermatologist or allergist must be co-prescriber or referring provider"
+      ],
+      "required_fields": ["patient_name", "dob", "member_id", "diagnosis_code", "bsa_pct", "easi_score", "prior_therapy", "drug_name", "dose", "prescriber_npi"],
+      "criteria_text": "IL-4/IL-13 inhibitors require PA for AD. Must document: BSA ≥ 10% or EASI ≥ 16, topical steroid failure ≥ 12 months.",
+      "approval_rate_pct": 80,
+      "avg_decision_days": 4
+    }
+  ],
+
+  "past_approvals": [
+    {
+      "id": "hist_pa_001",
+      "patient_id": "pat_martinez_001",
+      "drug": "semaglutide",
+      "icd10": "E11.9",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-CHOICE-PLUS",
+      "status": "approved",
+      "submitted": "2024-11-12",
+      "decided": "2024-11-15",
+      "receipt_url": "https://provider.healthfirst.com/pa/confirm/HF-2024-071234",
+      "rationale_summary": "T2DM uncontrolled on Metformin 1000mg BID × 14 months. HbA1c 8.6%. GLP-1 medically necessary per ADA 2024 guidelines.",
+      "embedding_key": "emb_pa_001"
+    },
+    {
+      "id": "hist_pa_002",
+      "patient_id": "pat_martinez_001",
+      "drug": "semaglutide",
+      "icd10": "E11.65",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-CHOICE-PLUS",
+      "status": "approved",
+      "submitted": "2025-02-18",
+      "decided": "2025-02-20",
+      "receipt_url": "https://provider.healthfirst.com/pa/confirm/HF-2025-030091",
+      "rationale_summary": "Renewal PA. HbA1c 8.4% — improved but not at goal. Continuing semaglutide 0.5mg QW with dose escalation plan.",
+      "embedding_key": "emb_pa_002"
+    },
+    {
+      "id": "hist_pa_003",
+      "patient_id": "pat_thompson_002",
+      "drug": "adalimumab",
+      "icd10": "M06.9",
+      "insurer_id": "ins_aetna_ppo",
+      "plan_id": "AET-OPEN-CHOICE",
+      "status": "approved",
+      "submitted": "2025-01-07",
+      "decided": "2025-01-12",
+      "receipt_url": "https://provider.aetna.com/pa/confirm/AET-2025-001847",
+      "rationale_summary": "Moderate-severe RA, DAS28 5.1. MTX 15mg QW × 24 months insufficient. TNF inhibitor indicated per ACR 2024 guidelines.",
+      "embedding_key": "emb_pa_003"
+    },
+    {
+      "id": "hist_pa_004",
+      "patient_id": "pat_nguyen_003",
+      "drug": "dupilumab",
+      "icd10": "L20.9",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-SELECT-HMO",
+      "status": "denied",
+      "submitted": "2025-03-05",
+      "decided": "2025-03-09",
+      "receipt_url": null,
+      "rationale_summary": "Denied: duration of topical therapy documented at 8 months, below 12-month threshold. Resubmit with updated therapy duration.",
+      "denial_reason": "Step therapy duration insufficient (8 months < 12 months required)",
+      "embedding_key": "emb_pa_004"
+    }
+  ],
+
+  "pa_form_template": {
+    "id": "form_hf_standard_v3",
+    "insurer_id": "ins_healthfirst_ppo",
+    "form_name": "HealthFirst PPO — Standard Prior Authorization Request",
+    "version": "3.2",
+    "url": "https://provider.healthfirst.com/forms/pa-standard-v3.pdf",
+    "fields": [
+      { "id": "f_patient_name",    "label": "Patient Full Name",           "type": "text",     "required": true },
+      { "id": "f_dob",             "label": "Date of Birth (MM/DD/YYYY)",  "type": "date",     "required": true },
+      { "id": "f_member_id",       "label": "Member ID",                   "type": "text",     "required": true },
+      { "id": "f_group_number",    "label": "Group Number",                "type": "text",     "required": true },
+      { "id": "f_diagnosis_code",  "label": "Primary ICD-10 Code",         "type": "text",     "required": true },
+      { "id": "f_diagnosis_desc",  "label": "Diagnosis Description",       "type": "text",     "required": true },
+      { "id": "f_drug_name",       "label": "Requested Drug (Brand/Generic)","type": "text",   "required": true },
+      { "id": "f_drug_ndc",        "label": "NDC",                         "type": "text",     "required": false },
+      { "id": "f_dose",            "label": "Dose & Frequency",            "type": "text",     "required": true },
+      { "id": "f_quantity",        "label": "Quantity Requested",          "type": "text",     "required": true },
+      { "id": "f_refills",         "label": "Number of Refills",           "type": "number",   "required": true },
+      { "id": "f_hba1c_value",     "label": "Most Recent HbA1c Value",     "type": "text",     "required": false, "conditional": "drug_class == GLP-1" },
+      { "id": "f_hba1c_date",      "label": "HbA1c Test Date",             "type": "date",     "required": false, "conditional": "drug_class == GLP-1" },
+      { "id": "f_prior_therapy",   "label": "Prior Therapies Tried & Failed","type": "textarea","required": true },
+      { "id": "f_clinical_notes",  "label": "Medical Necessity Statement", "type": "textarea", "required": true },
+      { "id": "f_prescriber_name", "label": "Prescribing Physician Name",  "type": "text",     "required": true },
+      { "id": "f_prescriber_npi",  "label": "Prescriber NPI",              "type": "text",     "required": true },
+      { "id": "f_clinic_name",     "label": "Clinic / Practice Name",      "type": "text",     "required": true },
+      { "id": "f_clinic_phone",    "label": "Clinic Phone",                "type": "tel",      "required": true },
+      { "id": "f_clinic_fax",      "label": "Clinic Fax",                  "type": "tel",      "required": true },
+      { "id": "f_date_of_request", "label": "Date of Request",             "type": "date",     "required": true },
+      { "id": "f_urgency",         "label": "Urgency",                     "type": "select",   "required": true, "options": ["Routine", "Urgent", "Emergent"] }
+    ]
+  },
+
+  "demo_runs": [
+    {
+      "id": "run_primary",
+      "label": "Demo run 1 — Ozempic / HealthFirst",
+      "patient_id": "pat_martinez_001",
+      "drug_id": "drug_ozempic_001",
+      "insurer_id": "ins_healthfirst_ppo",
+      "plan_id": "HF-CHOICE-PLUS",
+      "provider_id": "prov_chen_001",
+      "prescription_pdf": "assets/fixtures/prescription_ozempic_martinez.pdf",
+      "expected_outcome": "approved",
+      "receipt_url": "https://provider.healthfirst.com/pa/confirm/HF-2025-084721",
+      "notes": "Primary demo. Use this for the main 3-minute pitch."
+    },
+    {
+      "id": "run_secondary",
+      "label": "Demo run 2 — Humira / Aetna",
+      "patient_id": "pat_thompson_002",
+      "drug_id": "drug_humira_002",
+      "insurer_id": "ins_aetna_ppo",
+      "plan_id": "AET-OPEN-CHOICE",
+      "provider_id": "prov_okafor_002",
+      "prescription_pdf": "assets/fixtures/prescription_humira_thompson.pdf",
+      "expected_outcome": "approved",
+      "receipt_url": "https://provider.aetna.com/pa/confirm/AET-2025-091003",
+      "notes": "Re-run demo. Different drug, different payer — proves it's not a one-trick."
+    }
+  ],
+
+  "mock_portal_pages": {
+    "healthfirst_pa_submit": {
+      "url": "http://localhost:8080/mock-portal/healthfirst/pa",
+      "fields_visible": ["f_patient_name", "f_dob", "f_member_id", "f_diagnosis_code", "f_drug_name", "f_dose", "f_hba1c_value", "f_prior_therapy", "f_clinical_notes", "f_prescriber_npi"],
+      "submit_button_selector": "#btn-submit-pa",
+      "confirmation_url_pattern": "http://localhost:8080/mock-portal/healthfirst/confirm/{pa_id}",
+      "notes": "Self-hosted mock portal for Rtrvr to drive. Mirrors UHC/HealthFirst layout."
+    },
+    "aetna_pa_submit": {
+      "url": "http://localhost:8080/mock-portal/aetna/pa",
+      "fields_visible": ["f_patient_name", "f_dob", "f_member_id", "f_diagnosis_code", "f_drug_name", "f_dose", "f_das28_score", "f_prior_therapy", "f_prescriber_npi"],
+      "submit_button_selector": "#btn-submit-pa",
+      "confirmation_url_pattern": "http://localhost:8080/mock-portal/aetna/confirm/{pa_id}",
+      "notes": "Second mock portal for the re-run demo."
+    }
+  },
+
+  "opsera_fixture_responses": {
+    "scan_pass": {
+      "risk_level": "low",
+      "passed": true,
+      "scanned_fields": 12,
+      "flagged_fields": [],
+      "message": "No PHI over-disclosure detected. All fields within payer scope.",
+      "scan_id": "ops_c4f1a82e",
+      "context": "healthcare_prior_auth"
+    },
+    "scan_fail_example": {
+      "risk_level": "medium",
+      "passed": false,
+      "scanned_fields": 14,
+      "flagged_fields": ["ssn", "full_medication_list"],
+      "message": "2 fields flagged: SSN not required by payer form; full medication list exceeds scope.",
+      "scan_id": "ops_d8b2c91f",
+      "context": "healthcare_prior_auth"
+    }
+  }
+}

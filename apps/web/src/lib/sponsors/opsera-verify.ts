@@ -1,8 +1,11 @@
 import type { PaFormPayload } from "../pa-types";
+import { isDemoFixtureMode } from "../demo-mode";
 
 export type VerifyResult = {
   passed: boolean;
-  source: "opsera_mcp" | "opsera_rules";
+  // "opsera_mcp"                       — Opsera MCP responded with a real result
+  // "local_rules_opsera_unreachable"   — MCP attempted, failed; local PHI rules ran
+  source: "opsera_mcp" | "local_rules_opsera_unreachable";
   flagged_fields: string[];
   notes: string;
   opsera?: Record<string, unknown>;
@@ -41,7 +44,7 @@ function localPhiRules(payload: PaFormPayload): VerifyResult {
 
   return {
     passed: flagged.length === 0,
-    source: "opsera_rules",
+    source: "local_rules_opsera_unreachable",
     flagged_fields: flagged,
     notes:
       flagged.length === 0
@@ -101,7 +104,7 @@ async function mcpRequest(
     method: "POST",
     headers: mcpHeaders(token),
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(25000),
+    signal: AbortSignal.timeout(8000),
   });
 
   const text = await res.text();
@@ -168,7 +171,9 @@ function toolArguments(tool: string, payload: PaFormPayload): Record<string, unk
 
 async function callOpseraMcp(payload: PaFormPayload): Promise<Record<string, unknown> | null> {
   const token = process.env.OPSERA_API_TOKEN?.trim();
-  if (!token) return null;
+  if (!token || isDemoFixtureMode() || token.includes("...") || token.length < 40) {
+    return null;
+  }
 
   const list = await mcpRequest(token, "tools/list", {});
   if ("error" in list && !list.result) {

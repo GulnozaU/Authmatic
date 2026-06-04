@@ -1,19 +1,50 @@
+# Secrets
 .env
 .env.local
-*.pyc
-__pycache__/
-.venv/
-venv/
+.env.production
+.env.*.local
+.env.*.production
+
+# Node
 node_modules/
 .next/
+out/
 dist/
-.DS_Store
-*.log
-demo/recordings/
-apps/web/data/
-apps/web/.next/
-.compare-tmp/
+.pnpm-store/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
 .venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Local Postgres data
+.docker-data/
+pgdata/
+
+# Demo recordings (committed manually, large)
+demo/recordings/*.mp4
+demo/recordings/*.mov
+
+# Build artifacts
+*.egg-info/
+build/
 
 # InsForge & AI agent skills
 .insforge
