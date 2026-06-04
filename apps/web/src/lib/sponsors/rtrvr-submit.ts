@@ -31,19 +31,26 @@ export async function submitWithRtrvr(fields: PaFormPayload): Promise<RtrvrResul
 
   const url = portalUrl();
   const input = [
-    "Fill the pharmacy prior authorization form and submit.",
+    "Fill the Prescription Drug Prior Authorization form (Page 1) and submit.",
     `Open ${url}`,
-    `patient_name: ${fields.patient_name}`,
-    `dob: ${fields.dob}`,
-    `member_id: ${fields.member_id}`,
-    `diagnosis: ${fields.diagnosis}`,
-    `medication: ${fields.medication}`,
-    `dosage: ${fields.dosage}`,
-    `provider_name: ${fields.provider_name}`,
-    `justification: ${fields.justification}`,
-    "Use selectors #patient_name #dob #member_id #diagnosis #medication #dosage #provider_name #justification.",
-    "Click #submit-prior-auth.",
-    "Return the reference_id from the final URL (/portal/healthfirst/submission/PA-...).",
+    "Patient section:",
+    `#patient_first_name: ${fields.patient_name.split(" ")[0] ?? "Sarah"}`,
+    `#patient_last_name: ${fields.patient_name.split(" ").slice(1).join(" ") ?? "Martinez"}`,
+    `#patient_dob: ${fields.dob}`,
+    `#primary_patient_id: ${fields.member_id}`,
+    `#primary_insurance_name: HealthFirst PPO`,
+    "Prescriber section:",
+    `#prescriber_first_name: ${fields.provider_name.split(" ")[0] ?? "Emily"}`,
+    `#prescriber_last_name: Chen`,
+    `#prescriber_npi: 1234567890`,
+    "Medication section:",
+    `#medication_name: ${fields.medication}`,
+    `#medication_dose + #medication_frequency: ${fields.dosage}`,
+    `#diagnosis_primary: ${fields.diagnosis}`,
+    `#clinical_justification: ${fields.justification}`,
+    "Check #therapy_new and #medication_route_injection if applicable.",
+    "Click #submit-prior-auth when complete.",
+    "Return reference_id from /portal/healthfirst/submission/PA-... URL.",
   ].join("\n");
 
   try {
@@ -58,7 +65,7 @@ export async function submitWithRtrvr(fields: PaFormPayload): Promise<RtrvrResul
         urls: [url],
         response: { verbosity: "final" },
       }),
-      signal: AbortSignal.timeout(90000),
+      signal: AbortSignal.timeout(12000),
     });
 
     const raw = await res.text();

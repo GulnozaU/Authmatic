@@ -7,6 +7,7 @@
     "build": "npm run sync:demo && next build",
     "start": "next start",
     "sync:demo": "node scripts/sync-demo-pdfs.mjs",
+    "generate:pdfs": "node ../../scripts/generate-demo-pdfs.mjs && npm run sync:demo",
     "seed:insforge": "node scripts/seed-insforge.mjs",
     "upload:tigris": "node scripts/upload-demo-tigris.mjs"
   },

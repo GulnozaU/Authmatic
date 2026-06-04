@@ -1,0 +1,28 @@
+%PDF-1.4
+1 0 obj<< /Type /Catalog /Pages 2 0 R >>endobj
+2 0 obj<< /Type /Pages /Kids [3 0 R] /Count 1 >>endobj
+3 0 obj<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources<< /Font<< /F1 5 0 R >> >> >>endobj
+4 0 obj<< /Length 519 >>stream
+BT
+/F1 10 Tf
+1 0 0 1 50 760 Tm (BAY AREA PRIMARY CARE — PATIENT CHART \(CONFIDENTIAL\)) Tj
+1 0 0 1 50 747 Tm (Patient: James Robert Wilson | DOB: 07/22/1971 | Member ID: HF88210456) Tj
+1 0 0 1 50 734 Tm (Insurance: HealthFirst PPO | PCP: Dr. Emily Chen, MD) Tj
+1 0 0 1 50 721 Tm (Diagnosis: Essential Hypertension \(I10\) — BP 158/96 on amlodipine 5mg x6mo) Tj
+1 0 0 1 50 708 Tm (Plan: Start Lisinopril 10mg daily. Prior authorization required.) Tj
+1 0 0 1 50 695 Tm (FOR DEMO PURPOSES ONLY — SYNTHETIC PHI) Tj
+ET
+endstream endobj
+5 0 obj<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>endobj
+xref
+0 6
+0000000000 65535 f 
+0000000000 00000 n 
+0000000047 00000 n 
+0000000102 00000 n 
+0000000224 00000 n 
+0000000792 00000 n 
+trailer<< /Size 6 /Root 1 0 R >>
+startxref
+860
+%%EOF

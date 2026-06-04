@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { portalValuesToPayload } from "@/lib/portal-form-data";
 import type { PaFormPayload } from "@/lib/pa-types";
 import { createSubmission } from "@/lib/submissions";
 
 function formDataToPayload(form: FormData): PaFormPayload {
+  const raw = Object.fromEntries(form.entries()) as Record<string, string>;
+  if (raw.patient_first_name || raw.primary_patient_id) {
+    return portalValuesToPayload(raw);
+  }
   return {
     patient_name: String(form.get("patient_name") ?? ""),
     dob: String(form.get("dob") ?? ""),
@@ -20,13 +25,18 @@ export async function POST(request: NextRequest) {
   let payload: PaFormPayload;
 
   if (contentType.includes("application/json")) {
-    payload = (await request.json()) as PaFormPayload;
+    const body = (await request.json()) as Record<string, string>;
+    payload =
+      body.patient_first_name || body.primary_patient_id
+        ? portalValuesToPayload(body)
+        : (body as unknown as PaFormPayload);
   } else {
     const form = await request.formData();
     payload = formDataToPayload(form);
   }
 
   const submission = await createSubmission(payload);
+  const status_path = `/portal/healthfirst/submission/${submission.reference_id}`;
   const base = request.nextUrl.origin;
 
   const accept = request.headers.get("accept") ?? "";
@@ -34,14 +44,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       reference_id: submission.reference_id,
       status: submission.status,
-      status_url: `${base}/portal/healthfirst/submission/${submission.reference_id}`,
+      status_url: status_path,
       message:
         "Prior authorization request received. Status: Pending Review. Medical review typically completes within 24–72 hours.",
     });
   }
 
-  return NextResponse.redirect(
-    `${base}/portal/healthfirst/submission/${submission.reference_id}`,
-    303
-  );
+  return NextResponse.redirect(`${base}${status_path}`, 303);
 }

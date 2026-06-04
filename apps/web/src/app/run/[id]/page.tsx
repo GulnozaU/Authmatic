@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AgentStepCard } from "@/components/AgentStepCard";
+import { AppShell } from "@/components/AppShell";
 import type { AgentRun, AgentStep } from "@/lib/agent-runs";
 
 export default function RunPage() {
@@ -58,20 +59,15 @@ export default function RunPage() {
   }, [runId]);
 
   const done = run?.status === "completed";
-  const receipt = run?.receipt_url;
+  const receipt =
+    run?.receipt_url ??
+    (run?.reference_id ? `/portal/healthfirst/submission/${run.reference_id}` : null);
   const tigris = run?.tigris_artifacts;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b bg-white px-6 py-4">
-        <p className="text-xs font-bold uppercase tracking-widest text-hf-blue">
-          Authmatic
-        </p>
-        <h1 className="text-xl font-semibold text-hf-navy">Agent run</h1>
-        <p className="font-mono text-xs text-slate-400">{runId}</p>
-      </header>
-
-      <main className="mx-auto max-w-4xl space-y-6 px-6 py-8">
+    <AppShell title="Agent run">
+      <p className="-mt-4 mb-4 font-mono text-xs text-slate-400">{runId}</p>
+      <div className="mx-auto max-w-4xl space-y-6">
         {receipt && done && (
           <a
             href={receipt}
@@ -131,8 +127,14 @@ export default function RunPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Agent loop
           </h2>
-          {steps.length === 0 && (
-            <p className="text-slate-500">Starting agent…</p>
+          {steps.length === 0 && run?.status === "running" && (
+            <p className="animate-pulse text-slate-500">Agent starting — EXTRACT…</p>
+          )}
+          {steps.length === 0 && run?.status === "error" && (
+            <p className="text-red-600">{run.error ?? "Run failed"}</p>
+          )}
+          {steps.length === 0 && !run && (
+            <p className="text-slate-500">Connecting to agent stream…</p>
           )}
           {steps.map((step) => (
             <AgentStepCard key={step.step_no} step={step} />
@@ -166,7 +168,7 @@ export default function RunPage() {
             </ul>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

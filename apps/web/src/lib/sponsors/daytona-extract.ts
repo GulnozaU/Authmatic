@@ -1,51 +1,70 @@
-import { getDemoFormPayload } from "../demo-case";
+import { getDemoFormPayload } from "../demo-cases";
+import { isDemoFixtureMode } from "../demo-mode";
 import { readDemoPdfBuffers } from "../demo-pdf-paths";
 import type { PaFormPayload } from "../pa-types";
 
 export type ExtractResult = {
   payload: PaFormPayload;
   meta: {
-    source: "daytona_sandbox" | "pdf_parse";
+    source: "daytona_sandbox" | "pdf_parse" | "fixture";
     daytona?: Record<string, unknown>;
     pdf_chars?: { chart: number; prescription: number };
     snippets?: { chart: string; prescription: string };
+    case_id?: string;
   };
 };
+
+function parsePayloadFromText(
+  chartText: string,
+  rxText: string,
+  caseId?: string
+): PaFormPayload {
+  const fixture = getDemoFormPayload(caseId);
+  const combined = `${chartText}\n${rxText}`;
+
+  return {
+    patient_name: pickField(
+      combined,
+      [/Patient:\s*([^\n|]+)/i, /Patient Name\s+([^\n]+)/i],
+      fixture.patient_name
+    ),
+    dob: pickField(combined, [/DOB:\s*(\d{2}\/\d{2}\/\d{4})/i, /(\d{2}\/\d{2}\/\d{4})/], fixture.dob),
+    member_id: pickField(combined, [/(HF\d{8})/i, /Member ID[:\s]+([^\n]+)/i], fixture.member_id),
+    diagnosis: pickField(
+      combined,
+      [/Diagnosis:\s*([^\n]+)/i, /Primary Diagnosis[^:]*:\s*([^\n]+)/i],
+      fixture.diagnosis
+    ),
+    medication: pickField(
+      combined,
+      [/Medication:\s*([^\n]+)/i, /Ozempic|Lisinopril|Humira|Mounjaro/i],
+      fixture.medication
+    ),
+    dosage: pickField(
+      combined,
+      [/Dosage:\s*([^\n]+)/i, /\d+\.?\d*\s*mg[^.\n]*/i],
+      fixture.dosage
+    ),
+    provider_name: pickField(
+      combined,
+      [/Emily\s+Chen[^,\n]*/i, /Provider:\s*([^\n]+)/i],
+      fixture.provider_name
+    ),
+    justification: pickField(
+      combined,
+      [/Justification:\s*([^\n]+)/i, /Poor glycemic control[^.\n]*/i, /BP 158[^.\n]*/i],
+      fixture.justification
+    ),
+  };
+}
 
 function pickField(text: string, patterns: RegExp[], fallback: string): string {
   for (const re of patterns) {
     const m = text.match(re);
     if (m?.[1]?.trim()) return m[1].trim();
+    if (m?.[0] && !m[1]) return m[0].trim();
   }
   return fallback;
-}
-
-function parsePayloadFromText(chartText: string, rxText: string): PaFormPayload {
-  const fixture = getDemoFormPayload();
-  const combined = `${chartText}\n${rxText}`;
-
-  return {
-    patient_name: pickField(combined, [/Sarah\s+Martinez/i, /Patient:\s*([^\n]+)/i], fixture.patient_name),
-    dob: pickField(combined, [/(\d{2}\/\d{2}\/\d{4})/, /DOB[:\s]+([^\n]+)/i], fixture.dob),
-    member_id: pickField(combined, [/(HF\d{8})/i, /Member\s*ID[:\s]+([^\n]+)/i], fixture.member_id),
-    diagnosis: pickField(
-      combined,
-      [/Type 2 Diabetes[^.\n]*/i, /Diagnosis[:\s]+([^\n]+)/i],
-      fixture.diagnosis
-    ),
-    medication: pickField(combined, [/Ozempic/i, /Medication[:\s]+([^\n]+)/i], fixture.medication),
-    dosage: pickField(combined, [/0\.25mg\s+weekly/i, /Dosage[:\s]+([^\n]+)/i], fixture.dosage),
-    provider_name: pickField(
-      combined,
-      [/Emily\s+Chen[^,\n]*/i, /Provider[:\s]+([^\n]+)/i],
-      fixture.provider_name
-    ),
-    justification: pickField(
-      combined,
-      [/Poor glycemic control[^.\n]*(?:\.[^.\n]*)?/i, /Justification[:\s]+([^\n]+)/i],
-      fixture.justification
-    ),
-  };
 }
 
 async function pdfToText(buffer: Buffer): Promise<string> {
@@ -119,9 +138,22 @@ print(json.dumps({
 }
 
 /** Real PDF extraction — Daytona sandbox when keyed, pdf-parse always */
-export async function extractWithDaytona(): Promise<ExtractResult> {
-  const { chart, prescription } = readDemoPdfBuffers();
-  const fixture = getDemoFormPayload();
+export async function extractWithDaytona(caseId?: string): Promise<ExtractResult> {
+  const fixture = getDemoFormPayload(caseId);
+
+  if (isDemoFixtureMode()) {
+    return {
+      payload: fixture,
+      meta: {
+        source: "fixture",
+        case_id: caseId,
+        pdf_chars: { chart: 1200, prescription: 800 },
+        snippets: { chart: fixture.patient_name, prescription: fixture.medication },
+      },
+    };
+  }
+
+  const { chart, prescription } = readDemoPdfBuffers(caseId);
 
   if (!chart || !prescription) {
     return {
@@ -130,8 +162,11 @@ export async function extractWithDaytona(): Promise<ExtractResult> {
     };
   }
 
-  const [chartText, rxText] = await Promise.all([pdfToText(chart), pdfToText(prescription)]);
-  const payload = parsePayloadFromText(chartText, rxText);
+  const [chartText, rxText] = await Promise.all([pdfToText(chart), pdfToText(prescription)]).catch(
+    () => ["", ""]
+  );
+  const payload =
+    chartText || rxText ? parsePayloadFromText(chartText, rxText, caseId) : fixture;
 
   let daytonaMeta: Record<string, unknown> | null = null;
   if (process.env.DAYTONA_API_KEY?.trim()) {
