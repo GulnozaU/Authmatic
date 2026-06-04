@@ -1,44 +1,56 @@
 # Agent service (FastAPI)
 
-**Owner:** Teammate  
-**Integration surface:** mock HealthFirst portal in `apps/web` — see **[docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md)**
+FastAPI service for the Authmatic prior-authorization agent. It exposes the
+agent run API/SSE surface and coordinates the sponsor-backed tools used by the
+web app demo.
 
+**Integration surface:** the mock HealthFirst portal in `apps/web`.
 **Machine-readable portal spec:** [`mock/healthfirst-portal.json`](../../mock/healthfirst-portal.json)
 
 ---
 
-## Your job
+## What the service does
 
-Build the real agent loop on top of the mock insurer portal (already built):
-
-1. **EXTRACT** — parse Sarah's PDFs (Daytona / pdfplumber + LLM)
-2. **VERIFY** — Opsera compliance scan before submit
-3. **SUBMIT** — Rtrvr opens `PORTAL_URL`, fills 8 fields, clicks `#submit-prior-auth`
-4. **ADJUDICATE** — call `POST /api/pa/{ref}/adjudicate` (submit does NOT auto-approve)
-5. **PERSIST** — InsForge workflow + Tigris receipt
+1. **EXTRACT** — parse chart and prescription PDFs with the Daytona-backed tool.
+2. **VERIFY** — run the Opsera compliance scan before any submission.
+3. **SUBMIT** — use Rtrvr to drive the HealthFirst prior-auth form.
+4. **ADJUDICATE** — call the web app payer-review endpoint for the submitted ref.
+5. **PERSIST** — write workflow events to InsForge and artifacts to Tigris.
 
 ---
 
-## Portal URLs (do not hit real payers)
+## Local setup
 
-| URL | Purpose |
-|-----|---------|
-| `{WEB_URL}/portal/healthfirst/prior-auth` | **Form Rtrvr fills** |
-| `{WEB_URL}/portal/healthfirst/submission/{ref}` | Status page after submit |
-| `{WEB_URL}/run/{run_id}` | Audit UI (already in Next.js) |
+```bash
+cd apps/agent
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
 
-Set in `.env`:
+The web app proxies `/api/agent/*` to `AGENT_BASE_URL` when configured.
+For local development, run the web app on port 3000 and the agent on port 8000.
 
 ```bash
 WEB_URL=http://localhost:3000
 PORTAL_URL=http://localhost:3000/portal/healthfirst/prior-auth
+AGENT_BASE_URL=http://localhost:8000
 ```
-
-Use the port your Next.js dev server actually runs on.
 
 ---
 
-## Form selectors (Rtrvr)
+## Portal URLs
+
+| URL | Purpose |
+|-----|---------|
+| `{WEB_URL}/portal/healthfirst/prior-auth` | HealthFirst form driven by Rtrvr |
+| `{WEB_URL}/portal/healthfirst/submission/{ref}` | Status page after submit |
+| `{WEB_URL}/run/{run_id}` | Audit UI in the Next.js app |
+
+---
+
+## Form selectors
 
 | Field | Selector | Demo value |
 |-------|----------|------------|
@@ -49,66 +61,37 @@ Use the port your Next.js dev server actually runs on.
 | Medication | `#medication` | Ozempic |
 | Dosage | `#dosage` | 0.25mg weekly |
 | Provider | `#provider_name` | Emily Chen, MD |
-| Justification | `#justification` | Poor glycemic control despite first-line therapy… |
-| Submit | `#submit-prior-auth` | — |
+| Justification | `#justification` | Poor glycemic control despite first-line therapy... |
+| Submit | `#submit-prior-auth` | - |
 
-Full list + API examples: [`mock/healthfirst-portal.json`](../../mock/healthfirst-portal.json)
-
----
-
-## Rtrvr task prompt
-
-```
-Open {PORTAL_URL}. Fill: patient_name, dob, member_id, diagnosis,
-medication, dosage, provider_name, justification. Click #submit-prior-auth.
-Wait for redirect to /portal/healthfirst/submission/PA-*.
-Return the reference_id from the URL.
-```
+Full selector data lives in [`mock/healthfirst-portal.json`](../../mock/healthfirst-portal.json).
 
 ---
 
-## APIs you call (web app — already built)
-
-| Method | Path | When |
-|--------|------|------|
-| `POST` | `/api/pa/submit` | Optional — Rtrvr can submit via form instead |
-| `GET` | `/api/pa/{ref}` | Poll status |
-| `POST` | `/api/pa/{ref}/adjudicate` | **After submit** — runs payer review (~8s) |
-
-Or implement your own agent endpoints and have the web UI call you:
+## API surface
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| `POST` | `/api/run` | Accept PDFs, return `run_id` |
-| `GET` | `/api/run/{id}` | Full audit payload |
-| `GET` | `/api/stream/{id}` | SSE agent steps |
-| `GET` | `/health` | Smoke test |
+| `POST` | `/api/run` | Accept a case payload/PDF set and create an agent run |
+| `GET` | `/api/run/{id}` | Return the full audit payload |
+| `GET` | `/api/stream/{id}` | Stream agent lifecycle events over SSE |
+| `GET` | `/health` | Smoke-test endpoint |
 
-Today these live in `apps/web` as a **simulated** agent. Teammate can either:
-- **Option A:** Replace orchestrator — web proxies to FastAPI at `AGENT_URL`
-- **Option B:** Move SSE + run logic entirely into FastAPI
+The Next.js app also provides local payer endpoints used by the run loop:
+
+| Method | Path | When |
+|--------|------|------|
+| `POST` | `/api/pa/submit` | Optional direct submit path |
+| `GET` | `/api/pa/{ref}` | Poll portal status |
+| `POST` | `/api/pa/{ref}/adjudicate` | Run deterministic payer review |
 
 ---
 
 ## Fixture fallback
 
-When `DEMO_FIXTURE_MODE=true`, skip live Rtrvr and return canned receipt `PA-2026-00451`.
-
-Demo payload source: `mock/healthfirst-case.json` and `apps/web/src/lib/demo-case.ts`.
-
----
-
-## Smoke test (portal only, no FastAPI yet)
-
-```bash
-# Terminal 1
-cd apps/web && npm run dev
-
-# Terminal 2 — test adjudication after manual form submit
-curl -X POST http://localhost:3000/api/pa/PA-2026-00451/adjudicate \
-  -H "Content-Type: application/json" \
-  -d '{"review_delay_ms": 3000}'
-```
+When `DEMO_FIXTURE_MODE=true`, the agent skips live sponsor calls and replays
+fixture artifacts from `assets/fixtures/`. The audit page and SSE event shape
+stay the same so the demo remains stable offline.
 
 ---
 
@@ -116,10 +99,8 @@ curl -X POST http://localhost:3000/api/pa/PA-2026-00451/adjudicate \
 
 | File | Purpose |
 |------|---------|
-| [docs/healthfirst-portal-handoff.md](../../docs/healthfirst-portal-handoff.md) | **Start here** — URLs, form, API, flow |
-| [mock/healthfirst-portal.json](../../mock/healthfirst-portal.json) | Machine-readable selectors + API |
+| [mock/healthfirst-portal.json](../../mock/healthfirst-portal.json) | Machine-readable selectors + API notes |
 | [mock/healthfirst-case.json](../../mock/healthfirst-case.json) | Sarah Martinez demo data |
-| [spec.md](../../spec.md) | Features + acceptance criteria |
-| [architecture.md](../../architecture.md) | System design |
-| [docs/insforge.md](../../docs/insforge.md) | Database tables |
-| [docs/tigris.md](../../docs/tigris.md) | PDF storage |
+| [docs/architecture.md](../../docs/architecture.md) | System design |
+| [docs/insforge.md](../../docs/insforge.md) | Database/backend setup |
+| [docs/tigris.md](../../docs/tigris.md) | PDF artifact storage |

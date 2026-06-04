@@ -8,7 +8,7 @@ Create a **10–12 slide** pitch deck for **Authmatic**, a healthcare hackathon 
 
 ## Project facts
 
-- **Repo (canonical):** https://github.com/r2st/Authmatic
+- **Repo:** https://github.com/GulnozaU/Authmatic
 - **Team:** Gulnoza Usmonova + Subhendu Das
 - **Track:** Healthcare
 - **Tagline:** An autonomous agent that files prior authorizations in ~90 seconds with a full audit trail.
@@ -31,7 +31,7 @@ The repo combines **two stacks** (both present on `main`):
 | 5 PERSIST | **InsForge + Tigris** | `lib/submissions.ts`, `lib/tigris/persist-run.ts` | InsForge `@insforge/sdk` → `pa_submissions`, `prior_auths`. Tigris S3 (`t3.storage.dev`) → chart PDF, Rx PDF, receipt JSON per run. |
 
 ### B. Original stack (still in repo) — FastAPI ReAct agent
-`apps/agent` — Subhendu's 4-verb loop: READ-WEB (Rtrvr), EXECUTE (Daytona), VERIFY (Opsera MCP), PERSIST (Insforge Postgres + pgvector). Requires Docker Postgres + `make dev`. **Not the primary live demo path.**
+`apps/agent` — FastAPI 4-verb loop: READ-WEB (Rtrvr), EXECUTE (Daytona), VERIFY (Opsera MCP), PERSIST (Insforge Postgres + pgvector). Requires Docker Postgres + `make dev`. **Not the primary live demo path.**
 
 ## Sponsors — honest “real vs fallback” for presentation
 
@@ -40,7 +40,7 @@ Use this table in a slide. Be truthful with judges.
 | Sponsor | Integrated? | Actually live in our demo env | What to say on stage |
 |---------|-------------|-------------------------------|----------------------|
 | **InsForge** | ✅ Yes | **REAL** — API writes to cloud project (`pa_submissions`, `prior_auths`, dashboard) | "Every submission is durable in InsForge — judges can see it on the dashboard." |
-| **Tigris** | ✅ Yes (Gulnoza merge) | **REAL** — PDFs + receipt JSON uploaded to `authmatic-demo` bucket | "Patient documents and receipts land in Tigris — show keys on the run audit page." |
+| **Tigris** | ✅ Yes | **REAL** — PDFs + receipt JSON uploaded to `authmatic-demo` bucket | "Patient documents and receipts land in Tigris — show keys on the run audit page." |
 | **Rtrvr** | ✅ Yes | **REAL API call**; browser fill = iframe autofill on localhost, cloud browser on public deploy | "Rtrvr is our browser automation layer — you watch the form fill live in the iframe." |
 | **Opsera** | ✅ Yes | **Local PHI rules** unless valid MCP token; MCP wired in code | "Opsera VERIFY gates the packet — Maria Santos demo shows SSN blocked before submit." |
 | **Daytona** | ✅ Yes | **Wired** (`@daytonaio/sdk`); demo uses `DEMO_FIXTURE_MODE=true` + fixture extract for reliability | "Daytona runs PDF extraction in an ephemeral sandbox; we use fixture mode for demo stability." |
@@ -107,7 +107,7 @@ Each has `demo/pdfs/patient_chart_*.pdf` + `prescription_*.pdf`.
 7. **Audit trail** — `/run/{id}` + InsForge dashboard + Tigris storage
 8. **Safety** — Maria Santos / Opsera PHI block
 9. **What's next** — more payers, doctor SMS approval, NEAR TEE
-10. **Thank you** — github.com/r2st/Authmatic + QR
+10. **Thank you** — github.com/GulnozaU/Authmatic + QR
 
 ## Tone
 

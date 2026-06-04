@@ -14,7 +14,7 @@
       "full_url_local": "http://localhost:3000/portal/healthfirst/prior-auth",
       "purpose": "Pharmacy prior authorization request form — Rtrvr fills and submits here",
       "autofill_demo_query": "?autofill=1&run={run_id}",
-      "autofill_note": "Built-in client autofill for demo only. Teammate replaces with real Rtrvr browser automation."
+      "autofill_note": "Built-in client autofill for demo mode. Rtrvr browser automation uses the same stable fields for live runs."
     },
     "submission_status": {
       "path": "/portal/healthfirst/submission/{reference_id}",

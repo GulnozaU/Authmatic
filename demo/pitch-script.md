@@ -2,7 +2,7 @@
 
 > Read aloud with a timer. **Bold** lines survive the cut. v1 draft against
 > the post-PR-#2/#3 clinic UI + live deploy at
-> [z739c3mi.insforge.site](https://z739c3mi.insforge.site/) — storyteller
+> [fj245m46.insforge.site](https://fj245m46.insforge.site/) — storyteller
 > will rewrite; this is the starting point.
 
 ---
@@ -34,7 +34,7 @@ in four beats; the live deploy holds them all.
 
 | Time | What happens on screen | What you say |
 |------|------------------------|--------------|
-| 0:45 | Open https://z739c3mi.insforge.site — clinic console, "New prior authorization" header. | **"This is Elena's screen. One panel. One affordance."** |
+| 0:45 | Open https://fj245m46.insforge.site — clinic console, "New prior authorization" header. | **"This is Elena's screen. One panel. One affordance."** |
 | 0:55 | Click **Try the demo** (Sarah Martinez · Ozempic) | "Sarah Martinez. Type 2 diabetes. Her doctor needs Ozempic approved. Elena would normally spend 20 minutes on this — I'm going to click a button." |
 | 1:10 | EXTRACT card lights up — Daytona | "Daytona spins up a sandbox. Reads the chart PDF and the prescription. Extracts diagnosis, member ID, dose. Ninety milliseconds." |
 | 1:25 | VERIFY card — Opsera | "Before anything leaves us, Opsera scans the outgoing packet for PHI we shouldn't disclose. Green." |
@@ -96,8 +96,8 @@ After the single happy path, switch tabs to `/dashboard` and the
 ## Pre-pitch checklist (T-15 min)
 
 - [ ] Open the live deploy in two browser tabs:
-      `https://z739c3mi.insforge.site/` (operator view) and
-      `https://z739c3mi.insforge.site/dashboard` (system view).
+      `https://fj245m46.insforge.site/` (operator view) and
+      `https://fj245m46.insforge.site/dashboard` (system view).
 - [ ] `bash scripts/smoke.sh` — green on the rows that smoke covers.
 - [ ] One fresh `Try the demo` click in advance so any cold-start
       latency is already paid by the time you go on stage.

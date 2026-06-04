@@ -114,13 +114,13 @@ Next.js, FastAPI, Python, TypeScript, Tailwind CSS, PostgreSQL, pgvector, Llama-
 ## Repository URL
 
 ```
-https://github.com/r2st/Authmatic
+https://github.com/GulnozaU/Authmatic
 ```
 
 ## Live demo URL
 
 ```
-https://z739c3mi.insforge.site/
+https://fj245m46.insforge.site/
 
 Sign in to the clinic console with one of the demo accounts on the sign-in page:
   ma@bayarea-care.com / demo123        (Medical assistant)

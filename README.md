@@ -6,7 +6,7 @@
 > portals in 90 seconds, with a HIPAA-grade audit trail. Built around
 > five sponsors: **Opsera · Daytona · Insforge · Rtrvr.ai · Tigris**.
 >
-> **Live demo:** https://z739c3mi.insforge.site/
+> **Live demo:** https://fj245m46.insforge.site/
 
 ## What's in this repo
 
@@ -45,16 +45,13 @@
 ├── mock/                      ← HealthFirst portal fixture state (JSON)
 ├── docs/
 │   ├── architecture.md        ← Full system architecture
-│   ├── healthfirst-portal-handoff.md
-│   ├── team-split-report.md
 │   └── insforge.md / tigris.md
 ├── scripts/
 │   ├── smoke.sh               ← Hello-world each sponsor (preflight)
 │   ├── seed.py / seed.sh      ← Populate demo patients + prior approvals
 │   ├── reset.sh               ← Wipe + re-seed for a clean demo run
 │   ├── gen_demo_pdfs.py       ← Generate Lisinopril/Metformin PDFs
-│   ├── gen_mock_pdfs.py       ← Generate letterhead PDFs + insurance cards
-│   └── generate_handoff_pdf.py
+│   └── gen_mock_pdfs.py       ← Generate letterhead PDFs + insurance cards
 └── demo/
     ├── pitch-script.md        ← 3-minute pitch
     ├── presentation.html      ← Slide deck (browser-rendered)
@@ -70,7 +67,7 @@
 
 ### 1. Clone and install
 ```bash
-git clone https://github.com/r2st/Authmatic.git
+git clone https://github.com/GulnozaU/Authmatic.git
 cd Authmatic
 cp .env.example .env             # fill in the 7 secrets — see comments
 pnpm install                     # web deps
@@ -148,7 +145,7 @@ Full walkthrough: [demo/pitch-script.md](demo/pitch-script.md).
 ## Optional payer portal surface
 
 The web app also includes a standalone HealthFirst mock payer portal adapted
-from the GulnozaU/Authmatic repo:
+for the demo:
 
 - `/portal/healthfirst/prior-auth` — Rtrvr-friendly PA form with stable field ids.
 - `/portal/healthfirst/submission/:ref` — status page that polls local portal state.
