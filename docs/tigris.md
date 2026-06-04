@@ -27,7 +27,7 @@ Creates bucket if needed, uploads Sarah's PDFs, updates `demo_cases` in InsForge
 ## Code
 
 - `apps/web/src/lib/tigris/client.ts` — `uploadToTigris()` for agent/web
-- Teammate uses same env vars in `apps/agent` on PERSIST step
+- The agent service uses the same env vars in `apps/agent` on the PERSIST step
 
 ## Pitch line
 

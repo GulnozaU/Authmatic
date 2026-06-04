@@ -1,0 +1,26 @@
+{
+  "default": {
+    "payer": "UnitedHealthcare",
+    "covered": true,
+    "requires_pa": true,
+    "criteria_text": "Approved when ICD-10 indicates appropriate indication, prescriber is in-network, and first-line alternatives have been documented as tried or contraindicated."
+  },
+  "00093-5050-01|UHC-CHOICE-PLUS": {
+    "payer": "UnitedHealthcare",
+    "covered": true,
+    "requires_pa": true,
+    "criteria_text": "Lisinopril 10mg approved as first-line ACE-I for I10 (essential hypertension) with documented BP > 140/90 across two visits. Generic preferred. No PA needed if member has prior ACE-I claims in last 180 days."
+  },
+  "00093-1059-01|UHC-CHOICE-PLUS": {
+    "payer": "UnitedHealthcare",
+    "covered": true,
+    "requires_pa": true,
+    "criteria_text": "Metformin 500mg approved for E11.x (T2DM) with A1c >= 6.5. First-line per ADA guidelines. No PA needed if member has prior metformin claims in last 90 days."
+  },
+  "00093-5050-01|AETNA-OAP-GOLD": {
+    "payer": "Aetna",
+    "covered": true,
+    "requires_pa": false,
+    "criteria_text": "Lisinopril covered without prior authorization on Aetna OAP Gold formulary."
+  }
+}

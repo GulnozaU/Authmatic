@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    container_name: authmatic-postgres
+    environment:
+      POSTGRES_USER: authmatic
+      POSTGRES_PASSWORD: authmatic
+      POSTGRES_DB: authmatic
+    ports:
+      # 55432 on host → 5432 in container. Avoids collisions with other
+      # local Postgres instances developers commonly run.
+      - "55432:5432"
+    volumes:
+      - authmatic-pg:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authmatic -d authmatic"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  authmatic-pg:

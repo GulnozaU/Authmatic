@@ -1,0 +1,20 @@
+{
+  "demo_id": "james-lisinopril-healthfirst",
+  "patient": {
+    "full_name": "James Wilson",
+    "dob": "1971-07-22",
+    "member_id": "HF88210456",
+    "insurance_plan": "HealthFirst PPO",
+    "diagnosis": "Essential Hypertension",
+    "diagnosis_icd10": "I10"
+  },
+  "medication": {
+    "name": "Lisinopril",
+    "dosage": "10mg daily",
+    "justification": "BP 158/96 on amlodipine 5mg x6mo"
+  },
+  "prescriber": {
+    "name": "Emily Chen, MD",
+    "npi": "1234567890"
+  }
+}
